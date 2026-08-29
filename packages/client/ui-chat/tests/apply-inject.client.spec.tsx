@@ -108,14 +108,24 @@ describe('Chat inject API', () => {
     await b.runtime.dispose()
   })
 
-  it('writes Chat selection before opening details', async () => {
+  it('opens Git from the Session header and returns to Tool for a selected call', async () => {
     const b = await bench()
-    const { instance, injected } = b.chatViewApi(ROOT)
-    injected.openDetails({ turnSeq: 2, callId: 'c1' })
-    expect(instance.store.getSnapshot().selection).toEqual({ turnSeq: 2, callId: 'c1' })
+    const entry = b.runtime.slots.entries('conversation.session.header.utilities')[0]!
+    const instance = b.runtime.storeOf('conversation.session.header.utilities', ROOT) as ChatInstance
+    const injected = (entry.inject as unknown as (
+      sessionId: SessionId,
+      actions: ChatActions,
+    ) => { openGitDetails: () => void })(ROOT, instance.actions)
+
+    injected.openGitDetails()
+    expect(instance.store.getSnapshot().detailsTab).toBe('git')
     expect(b.layout.openDetails).toHaveBeenCalledOnce()
     expect(b.runtime.storeOf('details', ROOT)).toBe(instance)
-    expect(b.runtime.storeOf('conversation.session', ROOT)).not.toBe(instance)
+
+    b.chatViewApi(ROOT).injected.openDetails({ turnSeq: 2, callId: 'c1' })
+    expect(instance.store.getSnapshot().selection).toEqual({ turnSeq: 2, callId: 'c1' })
+    expect(instance.store.getSnapshot().detailsTab).toBe('tool')
+    expect(b.layout.openDetails).toHaveBeenCalledTimes(2)
     await b.runtime.dispose()
   })
 

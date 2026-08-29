@@ -11,7 +11,7 @@ export interface GitPanelInjected {
   commitFiles(path: string | undefined, commit: string): Promise<GitCommitFilesValue>
   diff(path: string | undefined, commit: string): Promise<GitDiffValue>
 }
-export type GitPanelProps = PropsRuntime<'conversation.details.git'> & PropsLocale<'git'> & InjectFace<GitPanelInjected>
+export type GitPanelProps = PropsRuntime<'conversation.details.git'> & PropsLocale<'gitPanel'> & InjectFace<GitPanelInjected>
 interface Detail { commit: string; files: GitCommitFilesValue['files']; diff: string }
 
 function shortCommit(commit: string | undefined): string { return commit === undefined ? '—' : commit.slice(0, 8) }

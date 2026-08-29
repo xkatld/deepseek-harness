@@ -8,9 +8,9 @@ import { GitPanel } from './GitPanel.tsx'
 import { en, zh, type GitKey } from './locales.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
-  interface LocaleNamespaceMap { git: GitKey }
+  interface LocaleNamespaceMap { gitPanel: GitKey }
 }
-const NS = 'git'
+const NS = 'gitPanel'
 export const inject = ['slots', 'locale', 'remote', 'remote.git']
 
 export function apply(ctx: Context): void {

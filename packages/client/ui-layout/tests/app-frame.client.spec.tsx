@@ -226,12 +226,15 @@ describe('AppFrame', () => {
     selectedSessionBlank.current = true
     act(() => { rerenderFrame() })
     expect(tracks(frame)).toEqual([280, 0])
-    expect(instance.getSnapshot().details).toBe(360)
+    expect(instance.getSnapshot().details).toBe(0)
+
+    act(() => { instance.actions.openDetails() })
+    expect(tracks(frame)).toEqual([280, 360])
 
     selectedSession.current = 's-next' as SessionId
     selectedSessionBlank.current = false
     act(() => { rerenderFrame() })
-    expect(tracks(frame)).toEqual([280, 360])
+    expect(tracks(frame)).toEqual([280, 0])
 
     selectedSession.current = undefined
     act(() => { rerenderFrame() })

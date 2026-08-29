@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment } from 'react'
 import { CodeBlock, IconBranchOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { shallowEqual } from '@deepseek-ai/dsh-client-store'
 import type { DetailsSlotProps } from '../contract/slots.ts'
@@ -45,7 +45,7 @@ function rawResultText(block: ToolCallBlock): string {
   return parts.join('\n')
 }
 
-export function DetailsPanel({ useChat, useSessions, sessionId, useStore, renderSlot, closeDetails, t }: DetailsPanelProps) {
+export function DetailsPanel({ useChat, useSessions, sessionId, useStore, actions, renderSlot, closeDetails, t }: DetailsPanelProps) {
   const selection = useStore(s => s.selection)
   // Session workspace root: a card model resolves omitted or relative
   // tool paths against it without reading Session services.
@@ -56,18 +56,15 @@ export function DetailsPanel({ useChat, useSessions, sessionId, useStore, render
   const material = useChat(
     s => (callId === undefined ? null : materialFor(s, callId)),
     (a, b) => shallowEqual(a, b))
-  const [activeTab, setActiveTab] = useState<'tool' | 'git'>('tool')
-  useEffect(() => {
-    if (callId !== undefined) setActiveTab('tool')
-  }, [callId])
+  const activeTab = useStore(s => s.detailsTab)
   return (
     <div className={css.root}>
       <div className={css.header}>
         <div className={css.tabs} role="tablist" aria-label={t('details.title')}>
-          <button type="button" role="tab" aria-selected={activeTab === 'tool'} onClick={() => { setActiveTab('tool') }}>
+          <button type="button" role="tab" aria-selected={activeTab === 'tool'} onClick={() => { actions.showDetailsTab('tool') }}>
             {selection === null ? t('details.title') : material?.name ?? selection.toolName ?? t('details.title')}
           </button>
-          <button type="button" role="tab" aria-selected={activeTab === 'git'} onClick={() => { setActiveTab('git') }}>
+          <button type="button" role="tab" aria-selected={activeTab === 'git'} onClick={() => { actions.showDetailsTab('git') }}>
             <IconBranchOutline16 size={14} />{t('details.gitTab')}
           </button>
         </div>

@@ -22,5 +22,6 @@ export interface TurnProcessViewEntry {
 /** Per-Session state shared only by the Chat view and details surface. */
 export interface ChatStoreState {
   selection: SelectionTarget | null
+  detailsTab: 'tool' | 'git'
   turnProcesses: TurnProcessViewEntry[]
 }

@@ -26,6 +26,7 @@ import { registerChatNodeRenderers } from './chat/register-node-renderers.ts'
 import { StatsLine } from './chat/StatsLine.tsx'
 import { registerConversationNodes } from './conversation-nodes/register.ts'
 import { DetailsPanel } from './details/DetailsPanel.tsx'
+import { GitComposerButton, GitHeaderButton } from './details/GitDetailsButton.tsx'
 import { en, NS, zh } from './locale.ts'
 import { TranscriptViewRow, type TranscriptViewRowInjected } from './settings/TranscriptViewRow.tsx'
 import { createChatStore } from './stores.ts'
@@ -156,6 +157,34 @@ export function apply(ctx: Context): void {
 
   ctx.slots.inject('conversation.approval.detail', () =>
     ctx.slots.register({ name: 'conversation.approval.detail' }, ApprovalCommand))
+
+  ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
+    name: 'conversation.session.header.utilities',
+    id: 'git-details',
+    order: 20,
+    locale: NS,
+    store: chatStore,
+    inject: (_sessionId: SessionId, actions: BoundActions<typeof chatStore>) => ({
+      openGitDetails: () => {
+        actions.showDetailsTab('git')
+        ctx.layout.openDetails()
+      },
+    }),
+  }, GitHeaderButton))
+
+  ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
+    name: 'conversation.input.right',
+    id: 'git-details',
+    order: 30,
+    locale: NS,
+    store: chatStore,
+    inject: (_sessionId: SessionId, actions: BoundActions<typeof chatStore>) => ({
+      openGitDetails: () => {
+        actions.showDetailsTab('git')
+        ctx.layout.openDetails()
+      },
+    }),
+  }, GitComposerButton))
 
   ctx.slots.inject('details', () => ctx.slots.register({
     name: 'details',

@@ -99,7 +99,7 @@ export function AppFrame({
   const panels = useStore(s => s)
   const detailsSession = useSessions((s) => {
     const current = s.current
-    return current !== undefined && s.byId[current]?.blank === false ? current : undefined
+    return current !== undefined && s.byId[current] !== undefined ? current : undefined
   })
   const documentTitle = useSessions((s) => {
     const current = s.current
