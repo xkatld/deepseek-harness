@@ -133,6 +133,16 @@ function requestPathname(req: IncomingMessage): string | undefined {
   }
 }
 
+/** Whether a root request carries one official browser launch token. */
+function isBrowserTokenExchange(req: IncomingMessage, pathname: string, method: string): boolean {
+  if (pathname !== '/' || method.toUpperCase() !== 'GET') return false
+  try {
+    return new URL(req.url ?? '/', 'http://dsh.internal').searchParams.getAll('token').length === 1
+  } catch {
+    return false
+  }
+}
+
 /**
  * Whether this path is reachable without a session while auth is enabled.
  * @param pathname - absolute request pathname.
@@ -545,6 +555,7 @@ export function createSessionAccessGate(config: Config, sessions: WebAuthSession
       const pathname = requestPathname(req)
       if (pathname === undefined) return false
       const method = req.method ?? 'GET'
+      if (isBrowserTokenExchange(req, pathname, method)) return true
       if (isPublicAuthPath(pathname, method)) return true
       return sessions.isAuthenticated(req)
     },

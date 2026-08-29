@@ -174,6 +174,14 @@ describe('real Loader composition', () => {
     const port = loaded.webServer.port
     loaded.webServer.register({
       kind: 'exact',
+      path: '/',
+      handler: (_req, res) => {
+        res.writeHead(200)
+        res.end('TOKEN EXCHANGE')
+      },
+    })
+    loaded.webServer.register({
+      kind: 'exact',
       path: '/probe',
       handler: (_req, res) => {
         res.writeHead(200)
@@ -194,6 +202,15 @@ describe('real Loader composition', () => {
         socket.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: dsh-test\r\nConnection: Upgrade\r\n\r\n')
       },
     })
+
+    const tokenExchange = await request(port, '/?token=official-launch-token')
+    expect(tokenExchange).toMatchObject({ status: 200, body: 'TOKEN EXCHANGE' })
+
+    const duplicateToken = await request(port, '/?token=one&token=two', {
+      headers: { accept: 'text/html', 'sec-fetch-dest': 'document' },
+    })
+    expect(duplicateToken.status).toBe(302)
+    expect(duplicateToken.location).toBe(`${LOGIN_PATH}?next=${encodeURIComponent('/')}`)
 
     const redirected = await request(port, '/probe', {
       headers: { accept: 'text/html', 'sec-fetch-dest': 'document' },
