@@ -7,16 +7,16 @@ kind: "package-reference"
 
 [English](README.md) | 中文
 
-## 摘要
+## 概述
 
 本包为 Web GUI 详情栏增加 Git 标签。它展示当前会话工作区的分支、工作树状态、同步计数、提交历史、变更文件和提交差异。
 
 ## 目录
 
-- [使用本包](#use-this-package)
-- [了解实现](#understand-the-implementation)
-- [模型体验](#model-experience)
-- [已知限制和延期工作](#known-limitations-and-deferred-work)
+- 使用本包
+- 了解实现
+- 模型体验
+- 已知限制和延期工作
 
 -----
 
@@ -38,8 +38,9 @@ kind: "package-reference"
 
 ## 已知限制和延期工作
 
-面板只读，并要求活动工作区是 Git 仓库。
+- **只读面板** — 面板不会暂存、提交或修改仓库状态。
+- **要求 Git 工作区** — 活动会话工作区必须是 Git 仓库。
 
-### 开发说明
+### 开发备注
 
 无。

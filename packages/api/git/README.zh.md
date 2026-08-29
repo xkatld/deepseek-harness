@@ -7,16 +7,16 @@ kind: "package-reference"
 
 [English](README.md) | 中文
 
-## 摘要
+## 概述
 
 本包向已鉴权的 Remote 客户端提供仓库状态、提交历史、变更文件和提交差异。
 
 ## 目录
 
-- [使用本包](#use-this-package)
-- [了解实现](#understand-the-implementation)
-- [模型体验](#model-experience)
-- [已知限制和延期工作](#known-limitations-and-deferred-work)
+- 使用本包
+- 了解实现
+- 模型体验
+- 已知限制和延期工作
 
 -----
 
@@ -38,8 +38,9 @@ kind: "package-reference"
 
 ## 已知限制和延期工作
 
-API 只读，并要求 Host 的可执行路径中存在 Git。
+- **只读操作** — API 不会暂存、提交或修改仓库状态。
+- **要求 Host Git** — Host 的可执行路径中必须存在 Git。
 
-### 开发说明
+### 开发备注
 
 无。

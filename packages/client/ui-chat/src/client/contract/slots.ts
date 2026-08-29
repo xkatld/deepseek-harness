@@ -143,6 +143,7 @@ export interface DetailsInjected {
   closeDetails: () => void
 }
 
+/** Workspace owner data passed to the Git details occupant. */
 export interface DetailsGitOwnerProps {
   /** Workspace root inspected by the Git panel. */
   cwd?: string

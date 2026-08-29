@@ -13,10 +13,10 @@ This package exposes repository status, commit history, changed files, and commi
 
 ## Table of Contents
 
-- [Use this package](#use-this-package)
-- [Understand the implementation](#understand-the-implementation)
-- [Model Experience](#model-experience)
-- [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
+- Use this package
+- Understand the implementation
+- Model Experience
+- Known Limitations and Deferred Work
 
 -----
 
@@ -30,7 +30,7 @@ The service runs bounded `git -C` subprocesses through `execFile`. The generated
 
 ## Model Experience
 
-This package adds no model-visible content and writes no Session events.
+None, as the package exposes read-only repository inspection and registers no model-facing input.
 
 #### KV Cache effect
 
@@ -38,7 +38,8 @@ None.
 
 ## Known Limitations and Deferred Work
 
-The API is read-only and requires Git on the Host executable path.
+- **Read-only operations** — the API does not stage, commit, or modify repository state.
+- **Host Git required** — Git must be available on the Host executable path.
 
 ### Dev Note
 

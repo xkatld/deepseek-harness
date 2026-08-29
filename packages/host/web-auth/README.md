@@ -1,17 +1,33 @@
+---
+description: "Session login and HTTP Basic access gate for public Web profile deployments."
+kind: "package-reference"
+---
+
 # @deepseek-ai/dsh-host-web-auth
 
 English | [中文](README.zh.md)
 
-Session login gate for the Web carrier (function plugin, config `{username, password, realm, sessionTtlSeconds}`). When both `username` and `password` are non-empty it:
+## Summary
 
-1. Registers one pre-route gate on `ctx.webServer` that admits only a valid `dsh_session` cookie or matching HTTP Basic credentials.
-2. Serves a browser login page at `/login`.
-3. Mints and revokes sessions at `/auth/login` and `/auth/logout`.
-4. Leaves `/manifest.webmanifest` and `/favicon.svg` reachable without a session so browser install metadata can load.
+This package protects the Web carrier with one shared account. It serves the login page, mints `dsh_session` cookies, accepts matching HTTP Basic credentials, and denies unauthenticated HTTP and WebSocket requests before route dispatch.
 
-Unauthenticated document navigations redirect to `/login?next=…`. Unauthenticated API, asset, and WebSocket traffic receives HTTP 401. Empty username or password leaves the gate open for loopback deployments.
+## Table of Contents
 
-The shipped Web composition feeds this row from `webStartup`: `dsh web --auth-user` and `--auth-password` populate the account, and `--host 0.0.0.0` is accepted only when both are present. With those flags set, the composition also opens the `/api` Host allowlist (`allowAnyHost`). Privileged desktop and settings methods stay loopback-pinned in [`dsh-client-connection`](../../client/connection/README.md).
+- Use this package
+- Understand the implementation
+- Model Experience
+- Known Limitations and Deferred Work
+- Dev Note
+
+-----
+
+## Use this package
+
+Mount the function plugin with `webserver` and configure `{ username, password, realm, sessionTtlSeconds }`. Empty credentials leave the gate open for loopback deployments. The shipped Web profile maps `--auth-user` and `--auth-password` to this configuration and requires both flags for `--host 0.0.0.0`.
+
+## Understand the implementation
+
+The plugin registers one pre-dispatch `WebAccessGate`. It serves `/login`, `/auth/login`, and `/auth/logout`; keeps `/manifest.webmanifest` and `/favicon.svg` public; accepts valid session cookies or Basic credentials; redirects unauthenticated document navigation to login; and returns HTTP 401 for unauthenticated API, asset, and WebSocket traffic.
 
 ## Model Experience
 
@@ -23,6 +39,10 @@ None; this package neither assembles nor sends a provider request.
 
 ## Known Limitations and Deferred Work
 
-- **No TLS termination here** — set a reverse proxy for HTTPS; the session cookie adds `Secure` when `X-Forwarded-Proto: https` is present.
+- **No TLS termination here** — use a reverse proxy for HTTPS; the session cookie adds `Secure` when `X-Forwarded-Proto: https` is present.
 - **One shared account** — the gate accepts exactly one username and password for the whole process.
 - **In-memory sessions** — restarting the process invalidates every cookie; there is no multi-user directory or password reset flow.
+
+### Dev Note
+
+None.

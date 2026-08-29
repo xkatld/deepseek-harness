@@ -137,6 +137,7 @@ function requestPathname(req: IncomingMessage): string | undefined {
  * Whether this path is reachable without a session while auth is enabled.
  * @param pathname - absolute request pathname.
  * @param method - HTTP method.
+ * @returns whether the request may bypass authentication.
  */
 export function isPublicAuthPath(pathname: string, method: string): boolean {
   const upper = method.toUpperCase()
@@ -165,6 +166,7 @@ function wantsHtmlLoginRedirect(req: IncomingMessage): boolean {
 /**
  * Build a safe relative next path for post-login redirect.
  * @param raw - user-supplied next value.
+ * @returns a same-origin relative redirect path.
  */
 export function sanitizeNextPath(raw: string | null | undefined): string {
   if (raw === undefined || raw === null || raw === '') return '/'
@@ -194,6 +196,7 @@ async function readBody(req: IncomingMessage, maxBytes: number): Promise<Buffer>
  * Parse login credentials from JSON or form bodies.
  * @param contentType - request content type.
  * @param body - raw body bytes.
+ * @returns normalized login fields.
  */
 export function parseLoginBody(contentType: string | undefined, body: Buffer): { username: string; password: string; next: string } {
   const text = body.toString('utf8')
@@ -411,12 +414,16 @@ export class WebAuthSessions {
 
   constructor(private readonly config: Config) {}
 
+  /** Whether this deployment configured a complete account. */
   get enabled(): boolean {
     return this.config.username !== '' && this.config.password !== ''
   }
 
   /**
    * Validate username and password against the configured account.
+   * @param username - presented username.
+   * @param password - presented password.
+   * @returns whether both values match.
    */
   verifyPassword(username: string, password: string): boolean {
     if (!this.enabled) return false
@@ -426,6 +433,8 @@ export class WebAuthSessions {
 
   /**
    * Mint a new opaque session token and remember it until TTL expiry.
+   * @param now - current time in milliseconds.
+   * @returns the new opaque token.
    */
   mintSession(now = Date.now()): string {
     const token = randomBytes(32).toString('base64url')
@@ -435,6 +444,7 @@ export class WebAuthSessions {
 
   /**
    * Drop one session token.
+   * @param token - token to revoke when present.
    */
   revokeSession(token: string | undefined): void {
     if (token === undefined) return
@@ -443,6 +453,9 @@ export class WebAuthSessions {
 
   /**
    * Whether the presented session token is currently valid.
+   * @param token - presented session token.
+   * @param now - current time in milliseconds.
+   * @returns whether the token exists and has not expired.
    */
   hasValidSession(token: string | undefined, now = Date.now()): boolean {
     if (token === undefined) return false
@@ -458,6 +471,9 @@ export class WebAuthSessions {
 
   /**
    * Whether the request carries a valid session cookie or Basic pair.
+   * @param req - incoming request.
+   * @param now - current time in milliseconds.
+   * @returns whether the request is authenticated.
    */
   isAuthenticated(req: IncomingMessage, now = Date.now()): boolean {
     if (!this.enabled) return true
@@ -476,6 +492,7 @@ export class WebAuthSessions {
  * @param token - opaque session id.
  * @param ttlSeconds - max-age.
  * @param secure - whether the request arrived on HTTPS or a trusted proxy.
+ * @returns a Set-Cookie header value.
  */
 export function sessionSetCookie(token: string, ttlSeconds: number, secure: boolean): string {
   const parts = [
@@ -492,6 +509,7 @@ export function sessionSetCookie(token: string, ttlSeconds: number, secure: bool
 /**
  * Build Set-Cookie clearing the session.
  * @param secure - whether the request arrived on HTTPS or a trusted proxy.
+ * @returns a Set-Cookie header value.
  */
 export function clearSessionCookie(secure: boolean): string {
   const parts = [
@@ -517,6 +535,7 @@ function requestIsSecure(req: IncomingMessage): boolean {
  * Build the access gate bound to one session table.
  * @param config - resolved plugin config.
  * @param sessions - live session store.
+ * @returns the pre-dispatch authentication gate.
  */
 export function createSessionAccessGate(config: Config, sessions: WebAuthSessions): WebAccessGate {
   const challenge = `Basic realm="${config.realm.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}", charset="UTF-8"`

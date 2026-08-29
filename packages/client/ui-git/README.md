@@ -13,10 +13,10 @@ This package adds a Git tab to the Web GUI details column. It shows the current 
 
 ## Table of Contents
 
-- [Use this package](#use-this-package)
-- [Understand the implementation](#understand-the-implementation)
-- [Model Experience](#model-experience)
-- [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
+- Use this package
+- Understand the implementation
+- Model Experience
+- Known Limitations and Deferred Work
 
 -----
 
@@ -30,7 +30,7 @@ The plugin occupies `conversation.details.git`. Its injected callbacks call the 
 
 ## Model Experience
 
-This package adds no model-visible content and writes no Session events.
+None, as the package renders repository inspection and registers no model-facing input.
 
 #### KV Cache effect
 
@@ -38,7 +38,8 @@ None.
 
 ## Known Limitations and Deferred Work
 
-The panel is read-only and requires the active workspace to be a Git repository.
+- **Read-only panel** — the panel does not stage, commit, or modify repository state.
+- **Git workspace required** — the active Session workspace must be a Git repository.
 
 ### Dev Note
 

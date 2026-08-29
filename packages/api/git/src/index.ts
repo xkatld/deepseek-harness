@@ -17,7 +17,11 @@ const execFile = promisify(execFileCallback)
 const DEFAULT_HISTORY_LIMIT = 30
 const MAX_HISTORY_LIMIT = 200
 
-export interface Config { readonly cwd: string }
+/** Default repository selection for the Git Remote. */
+export interface Config {
+  /** Repository path used when a request omits its path. */
+  readonly cwd: string
+}
 
 /** Host service backing the generated `ctx.remote.git` namespace. */
 export class GitController extends TypertRemoteService {
@@ -40,6 +44,12 @@ export class GitController extends TypertRemoteService {
     return result.stdout
   }
 
+  /**
+   * Read repository branch, synchronization, and working-tree status.
+   * @param request - optional repository path.
+   * @param signal - caller cancellation.
+   * @returns current repository status.
+   */
   @Remote
   async status(request: GitStatusRequest, signal: AbortSignal): Promise<GitStatusView> {
     const branch = (await this.run(request.path, ['branch', '--show-current'], signal)).trim()
@@ -63,6 +73,12 @@ export class GitController extends TypertRemoteService {
     return { branch, head, ...(upstream === undefined ? {} : { upstream }), ahead, behind, changes }
   }
 
+  /**
+   * Read bounded commit history.
+   * @param request - repository path and optional limit.
+   * @param signal - caller cancellation.
+   * @returns newest-first commit entries.
+   */
   @Remote
   async history(request: GitHistoryRequest, signal: AbortSignal): Promise<GitHistoryValue> {
     const limit = Math.min(MAX_HISTORY_LIMIT, Math.max(1, request.limit ?? DEFAULT_HISTORY_LIMIT))
@@ -74,6 +90,12 @@ export class GitController extends TypertRemoteService {
     return { entries }
   }
 
+  /**
+   * Read files changed by one commit.
+   * @param request - repository path and commit id.
+   * @param signal - caller cancellation.
+   * @returns changed file entries.
+   */
   @Remote
   async commitFiles(request: GitCommitRequest, signal: AbortSignal): Promise<GitCommitFilesValue> {
     const output = await this.run(request.path, ['diff-tree', '--root', '--no-commit-id', '--name-status', '-r', request.commit], signal)
@@ -84,6 +106,12 @@ export class GitController extends TypertRemoteService {
     return { files }
   }
 
+  /**
+   * Read the formatted unified diff for one commit.
+   * @param request - repository path and commit id.
+   * @param signal - caller cancellation.
+   * @returns commit metadata and unified diff text.
+   */
   @Remote
   async diff(request: GitCommitRequest, signal: AbortSignal): Promise<GitDiffValue> {
     return { diff: await this.run(request.path, ['show', '--format=fuller', '--no-ext-diff', request.commit], signal) }
