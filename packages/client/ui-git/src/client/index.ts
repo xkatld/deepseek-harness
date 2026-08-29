@@ -1,8 +1,10 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from '@deepseek-ai/dsh-client-ui-right-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import { GitOpener, GitTab } from './GitContributions.tsx'
 import type { GitPanelInjected } from './GitPanel.tsx'
 import { GitPanel } from './GitPanel.tsx'
 import { en, zh, type GitKey } from './locales.ts'
@@ -11,7 +13,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap { gitPanel: GitKey }
 }
 const NS = 'gitPanel'
-export const inject = ['slots', 'locale', 'remote', 'remote.git']
+export const inject = ['slots', 'locale', 'rightSidebar', 'remote', 'remote.git']
 
 export function apply(ctx: Context): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-git: dictionaries')
@@ -27,5 +29,14 @@ export function apply(ctx: Context): void {
     commitFiles: (path, commit) => unwrap(ctx.remote.git.commitFiles({ ...(path === undefined ? {} : { path }), commit })),
     diff: (path, commit) => unwrap(ctx.remote.git.diff({ ...(path === undefined ? {} : { path }), commit })),
   })
-  ctx.slots.inject('conversation.details.git', () => ctx.slots.register({ name: 'conversation.details.git', locale: NS, inject: injected }, GitPanel))
+  ctx.slots.inject('right-sidebar.tabs', () => ctx.slots.register({
+    name: 'right-sidebar.tabs', id: 'git', order: 20, locale: NS,
+  }, GitTab))
+  ctx.slots.inject('right-sidebar.content', () => ctx.slots.register({
+    name: 'right-sidebar.content', id: 'git', order: 20, locale: NS, inject: injected,
+  }, GitPanel))
+  ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
+    name: 'conversation.input.right', id: 'git', order: 30, locale: NS,
+    inject: () => ({ openGit: () => { ctx.rightSidebar.open('git') } }),
+  }, GitOpener))
 }

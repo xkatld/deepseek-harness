@@ -4,14 +4,13 @@
   "include": ["src"],
   "references": [
     { "path": "../../../vendor/cordis" },
-    { "path": "../../api/git" },
-    { "path": "../../api/remotes/tsconfig.client.json" },
     { "path": "../locale" },
-    { "path": "../ui-conversation" },
-    { "path": "../ui-right-sidebar" },
-    { "path": "../ui-primitives" },
+    { "path": "../store" },
+    { "path": "../ui-layout" },
     { "path": "../ui-renderer" },
     { "path": "../ui-slots" },
+    { "path": "../ui-conversation" },
+    { "path": "../../core/session" },
     { "path": "../../runtime-diagnostics/invariants" }
   ]
 }

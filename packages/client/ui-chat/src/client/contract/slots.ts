@@ -9,7 +9,7 @@ import type {
 } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { MarkdownFileMentions } from '@deepseek-ai/dsh-client-ui-primitives'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import type { RightSidebarContentOwnerProps, RightSidebarTabOwnerProps } from '@deepseek-ai/dsh-client-ui-right-sidebar/client'
 import type { createChatStore } from '../stores.ts'
 import type { ToolCallId, SelectionTarget } from './store.ts'
 import type { ChatNode, ChatNodeKind } from './chat-nodes.ts'
@@ -138,24 +138,16 @@ export type ChatViewSlotProps =
 /** Full props of the durable-message image renderer. */
 export type MessageImagesProps = PropsRuntime<'conversation.message.images'> & PropsLocale<'conversation'>
 
-/** Details-panel callbacks. */
-export interface DetailsInjected {
-  closeDetails: () => void
-}
-
-/** Workspace owner data passed to the Git details occupant. */
-export interface DetailsGitOwnerProps {
-  /** Workspace root inspected by the Git panel. */
-  cwd?: string
-}
-
-/** Full details-panel props. */
+/** Full Tool contribution props inside the extensible right sidebar. */
 export type DetailsSlotProps =
-  PropsRuntime<'details'>
-  & PropsRenderSlots<'conversation.details.tool' | 'conversation.details.git'>
+  PropsRuntime<'right-sidebar.content'>
+  & RightSidebarContentOwnerProps
+  & PropsRenderSlots<'conversation.details.tool'>
   & PropsStore<ChatStore>
-  & InjectFace<DetailsInjected>
   & PropsLocale<'chat'>
+
+/** Tool tab props contributed to the right sidebar. */
+export type DetailsTabProps = PropsRuntime<'right-sidebar.tabs'> & RightSidebarTabOwnerProps & PropsStore<ChatStore> & PropsLocale<'chat'>
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SessionStandardProps {
@@ -212,7 +204,5 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      * replaces the shipped Tool details renderer; absence uses the raw fallback.
      */
     'conversation.details.tool': { kind: 'single'; scope: 'session'; owner: DetailsToolOwnerProps }
-    /** Git repository panel displayed beside Tool details. */
-    'conversation.details.git': { kind: 'single'; scope: 'session'; owner: DetailsGitOwnerProps }
   }
 }

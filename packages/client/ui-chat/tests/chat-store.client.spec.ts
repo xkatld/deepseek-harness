@@ -4,7 +4,7 @@ import { createChatStore } from '../src/client/stores.ts'
 describe('createChatStore', () => {
   it('starts without a selected Chat target', () => {
     const store = createChatStore().create()
-    expect(store.store.getSnapshot()).toEqual({ selection: null, detailsTab: 'tool', turnProcesses: [] })
+    expect(store.store.getSnapshot()).toEqual({ selection: null, turnProcesses: [] })
   })
 
   it('selects and clears one Chat details target', () => {
@@ -14,14 +14,6 @@ describe('createChatStore', () => {
       .toEqual({ turnSeq: 3, callId: 'c1', toolName: 'bash' })
     store.actions.select(null)
     expect(store.store.getSnapshot().selection).toBeNull()
-  })
-
-  it('switches details tabs and returns to Tool when a call is selected', () => {
-    const store = createChatStore().create()
-    store.actions.showDetailsTab('git')
-    expect(store.store.getSnapshot().detailsTab).toBe('git')
-    store.actions.select({ turnSeq: 3, callId: 'c1' })
-    expect(store.store.getSnapshot().detailsTab).toBe('tool')
   })
 
   it('creates independent instances', () => {

@@ -33,6 +33,7 @@ describe('GitPanel', () => {
       history={history}
       commitFiles={commitFiles}
       diff={diff}
+      closeDetails={vi.fn()}
       t={t}
       sessionId={'session-1' as never}
       useSession={vi.fn() as never}
@@ -67,6 +68,7 @@ describe('GitPanel', () => {
       history={() => Promise.reject(new Error('not a repository'))}
       commitFiles={vi.fn()}
       diff={vi.fn()}
+      closeDetails={vi.fn()}
       t={t}
       sessionId={'session-1' as never}
       useSession={vi.fn() as never}

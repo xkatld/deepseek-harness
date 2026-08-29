@@ -13,7 +13,7 @@ import {
   apply as applyConversation, inject as injectConversation,
 } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import {
-  apply as applyChat, inject as injectChat, type ChatViewInjected, type DetailsInjected,
+  apply as applyChat, inject as injectChat, type ChatViewInjected,
 } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { createChatStore } from '../src/client/stores.ts'
@@ -47,8 +47,8 @@ function sessionFakeFor() {
 async function bench() {
   const runtime = await SlotTestRuntime.create()
   runtime.ctx.provide('settingsScope', { bind: () => stubSettingsScope().scope } as never)
-  const layout = { openDetails: vi.fn(), closeDetails: vi.fn() }
-  runtime.ctx.provide('layout', layout as never)
+  const rightSidebar = { open: vi.fn(), show: vi.fn(), close: vi.fn() }
+  runtime.ctx.provide('rightSidebar', rightSidebar as never)
   const openWorkspacePath = vi.fn<ClientRemote['session']['openWorkspacePath']>(
     () => Promise.resolve({ ok: true, value: { opened: true } }),
   )
@@ -82,7 +82,7 @@ async function bench() {
     ) => ChatViewInjected)(id, instance.actions)
     return { instance, injected }
   }
-  return { runtime, layout, openWorkspacePath, session, chatViewApi }
+  return { runtime, rightSidebar, openWorkspacePath, session, chatViewApi }
 }
 
 describe('Chat inject API', () => {
@@ -108,24 +108,12 @@ describe('Chat inject API', () => {
     await b.runtime.dispose()
   })
 
-  it('opens Git from the Session header and returns to Tool for a selected call', async () => {
+  it('selects a Tool call and opens the Tool sidebar contribution', async () => {
     const b = await bench()
-    const entry = b.runtime.slots.entries('conversation.session.header.utilities')[0]!
-    const instance = b.runtime.storeOf('conversation.session.header.utilities', ROOT) as ChatInstance
-    const injected = (entry.inject as unknown as (
-      sessionId: SessionId,
-      actions: ChatActions,
-    ) => { openGitDetails: () => void })(ROOT, instance.actions)
-
-    injected.openGitDetails()
-    expect(instance.store.getSnapshot().detailsTab).toBe('git')
-    expect(b.layout.openDetails).toHaveBeenCalledOnce()
-    expect(b.runtime.storeOf('details', ROOT)).toBe(instance)
-
     b.chatViewApi(ROOT).injected.openDetails({ turnSeq: 2, callId: 'c1' })
+    const instance = b.chatViewApi(ROOT).instance
     expect(instance.store.getSnapshot().selection).toEqual({ turnSeq: 2, callId: 'c1' })
-    expect(instance.store.getSnapshot().detailsTab).toBe('tool')
-    expect(b.layout.openDetails).toHaveBeenCalledTimes(2)
+    expect(b.rightSidebar.open).toHaveBeenCalledWith('tool')
     await b.runtime.dispose()
   })
 
@@ -152,17 +140,6 @@ describe('Chat inject API', () => {
     ) => ChatViewInjected
     expect(() => injectView('never-listed' as SessionId, {} as ChatActions))
       .toThrow(/unknown session/)
-    await b.runtime.dispose()
-  })
-
-  it('closes details while sharing selection through the Chat store', async () => {
-    const b = await bench()
-    const entry = b.runtime.slots.entries('details')[0]!
-    const injected = (entry.inject as unknown as () => DetailsInjected)()
-    expect(Object.keys(injected)).toEqual(['closeDetails'])
-    injected.closeDetails()
-    expect(b.layout.closeDetails).toHaveBeenCalledOnce()
-    expect(b.runtime.storeOf('details', ROOT)).toBe(b.runtime.storeOf('conversation.view', ROOT))
     await b.runtime.dispose()
   })
 

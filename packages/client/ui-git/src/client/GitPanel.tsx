@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { IconBranchOutline16, IconPanelLeftOutline16, IconRefreshOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { GitCommitFilesValue, GitDiffValue, GitHistoryEntry, GitHistoryValue, GitStatusView } from '@deepseek-ai/dsh-api-git/types'
+import type { RightSidebarContentOwnerProps } from '@deepseek-ai/dsh-client-ui-right-sidebar/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { GitKey } from './locales.ts'
 import css from './GitPanel.module.css'
@@ -11,7 +12,7 @@ export interface GitPanelInjected {
   commitFiles(path: string | undefined, commit: string): Promise<GitCommitFilesValue>
   diff(path: string | undefined, commit: string): Promise<GitDiffValue>
 }
-export type GitPanelProps = PropsRuntime<'conversation.details.git'> & PropsLocale<'gitPanel'> & InjectFace<GitPanelInjected>
+export type GitPanelProps = PropsRuntime<'right-sidebar.content'> & RightSidebarContentOwnerProps & PropsLocale<'gitPanel'> & InjectFace<GitPanelInjected>
 interface Detail { commit: string; files: GitCommitFilesValue['files']; diff: string }
 
 function shortCommit(commit: string | undefined): string { return commit === undefined ? '—' : commit.slice(0, 8) }

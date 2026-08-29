@@ -37,7 +37,7 @@ async function bench() {
       ? chatSettings.scope
       : stubSettingsScope().scope,
   } as never)
-  runtime.ctx.provide('layout', { openDetails: vi.fn(), closeDetails: vi.fn() } as never)
+  runtime.ctx.provide('rightSidebar', { open: vi.fn(), show: vi.fn(), close: vi.fn() } as never)
   runtime.ctx.provide('uiWorkspace', {
     connectWorkspace: vi.fn(async () => SID),
   } as never)
@@ -50,6 +50,8 @@ async function bench() {
   await runtime.root.declare({
     'conversation': { kind: 'single', scope: 'session-maybe' },
     'details': { kind: 'single', scope: 'session' },
+    'right-sidebar.tabs': { kind: 'list', scope: 'session' },
+    'right-sidebar.content': { kind: 'list', scope: 'session' },
     'conversation.approval.detail': { kind: 'single', scope: 'session' },
     'settings.general.item': { kind: 'list', scope: 'root' },
   }, (_props: { renderSlot?: unknown }) => null)
@@ -64,7 +66,7 @@ async function bench() {
   return { runtime, conversation, chat, chatSettings, sourceDescriptor }
 }
 
-function storeOf(runtime: SlotTestRuntime, key: 'conversation.session' | 'conversation.session.header' | 'conversation.view' | 'details') {
+function storeOf(runtime: SlotTestRuntime, key: 'conversation.session' | 'conversation.session.header' | 'conversation.view' | 'right-sidebar.content') {
   return (runtime.slots.entries(key)[0] as { store?: unknown } | undefined)?.store
 }
 
@@ -80,7 +82,8 @@ describe('Chat apply wiring', () => {
       .toEqual(['stats'])
     expect(b.runtime.slots.entries('settings.general.item').map(row => row.options.id))
       .toEqual(['transcript-view', 'composer-enter'])
-    expect(b.runtime.slots.entries('details')).toHaveLength(1)
+    expect(b.runtime.slots.entries('right-sidebar.tabs').map(row => row.options.id)).toEqual(['tool'])
+    expect(b.runtime.slots.entries('right-sidebar.content').map(row => row.options.id)).toEqual(['tool'])
     await b.runtime.dispose()
   })
 
@@ -107,7 +110,7 @@ describe('Chat apply wiring', () => {
     const conversationStore = storeOf(b.runtime, 'conversation.session')
     const chatStore = storeOf(b.runtime, 'conversation.view')
     expect(storeOf(b.runtime, 'conversation.session.header')).toBe(conversationStore)
-    expect(storeOf(b.runtime, 'details')).toBe(chatStore)
+    expect(storeOf(b.runtime, 'right-sidebar.content')).toBe(chatStore)
     expect(chatStore).toBeDefined()
     expect(chatStore).not.toBe(conversationStore)
     await b.runtime.dispose()

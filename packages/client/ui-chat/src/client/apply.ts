@@ -9,13 +9,13 @@ import { resolveWorkspacePath } from '@deepseek-ai/dsh-util-workspace-path'
 // Type-only service and declaration merges used by the apply world.
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import type {} from '@deepseek-ai/dsh-client-ui-right-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type {
-  ChatNodeTurnDataInjected, ChatScrollPosition, ChatViewInjected, DetailsInjected,
+  ChatNodeTurnDataInjected, ChatScrollPosition, ChatViewInjected,
   TurnTailOwnerProps,
 } from './contract/slots.ts'
 import type { ChatSnapshot } from './contract/snapshot.ts'
@@ -25,8 +25,7 @@ import { ChatView } from './chat/ChatView.tsx'
 import { registerChatNodeRenderers } from './chat/register-node-renderers.ts'
 import { StatsLine } from './chat/StatsLine.tsx'
 import { registerConversationNodes } from './conversation-nodes/register.ts'
-import { DetailsPanel } from './details/DetailsPanel.tsx'
-import { GitComposerButton, GitHeaderButton } from './details/GitDetailsButton.tsx'
+import { DetailsPanel, ToolDetailsTab } from './details/DetailsPanel.tsx'
 import { en, NS, zh } from './locale.ts'
 import { TranscriptViewRow, type TranscriptViewRowInjected } from './settings/TranscriptViewRow.tsx'
 import { createChatStore } from './stores.ts'
@@ -48,7 +47,7 @@ const CHAT_NODE_INJECT: ChatNodeTurnDataInjected = {
 
 /** Services required by the Chat target and its presentation registrations. */
 export const inject = [
-  'slots', 'sessions', 'uiSession', 'uiConversation', 'layout', 'locale',
+  'slots', 'sessions', 'uiSession', 'uiConversation', 'rightSidebar', 'locale',
   'settingsScope', 'remote', 'remote.session',
 ]
 
@@ -115,7 +114,7 @@ export function apply(ctx: Context): void {
           hooks: { transcriptView: transcriptView.mode },
           openDetails: (target) => {
             actions.select(target)
-            ctx.layout.openDetails()
+            ctx.rightSidebar.open('tool')
           },
           fileMentions: (owner: TurnTailOwnerProps) => ctx.get('chatFileMentions')?.forClosing(owner),
           openFile: async (path) => {
@@ -158,42 +157,16 @@ export function apply(ctx: Context): void {
   ctx.slots.inject('conversation.approval.detail', () =>
     ctx.slots.register({ name: 'conversation.approval.detail' }, ApprovalCommand))
 
-  ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
-    name: 'conversation.session.header.utilities',
-    id: 'git-details',
-    order: 20,
-    locale: NS,
-    store: chatStore,
-    inject: (_sessionId: SessionId, actions: BoundActions<typeof chatStore>) => ({
-      openGitDetails: () => {
-        actions.showDetailsTab('git')
-        ctx.layout.openDetails()
-      },
-    }),
-  }, GitHeaderButton))
+  ctx.slots.inject('right-sidebar.tabs', () => ctx.slots.register({
+    name: 'right-sidebar.tabs', id: 'tool', order: 0, locale: NS, store: chatStore,
+  }, ToolDetailsTab))
 
-  ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
-    name: 'conversation.input.right',
-    id: 'git-details',
-    order: 30,
+  ctx.slots.inject('right-sidebar.content', () => ctx.slots.register({
+    name: 'right-sidebar.content',
+    id: 'tool',
+    order: 0,
     locale: NS,
+    children: { 'conversation.details.tool': { kind: 'single', scope: 'session' } },
     store: chatStore,
-    inject: (_sessionId: SessionId, actions: BoundActions<typeof chatStore>) => ({
-      openGitDetails: () => {
-        actions.showDetailsTab('git')
-        ctx.layout.openDetails()
-      },
-    }),
-  }, GitComposerButton))
-
-  ctx.slots.inject('details', () => ctx.slots.register({
-    name: 'details',
-    locale: NS,
-    children: {
-      'conversation.details.tool': { kind: 'single', scope: 'session' },
-      'conversation.details.git': { kind: 'single', scope: 'session' },
-    },
-    store: chatStore,
-    inject: (): DetailsInjected => ({ closeDetails: () => { ctx.layout.closeDetails() } }),
   }, DetailsPanel))
 }

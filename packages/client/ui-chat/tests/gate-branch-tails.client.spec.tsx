@@ -42,7 +42,6 @@ afterEach(() => {
 
 const SID = 's1' as SessionId
 
-/** Minimal framework seat for direct DetailsPanel host tests. */
 const SessionProviderStub: SessionProviderComponent = ({ children }) => children
 
 /** Observe the owner currency without importing the Tool details renderer. */
@@ -127,7 +126,7 @@ describe('render branch tails', () => {
     expect(view.container.querySelector('[data-state="running"]')).not.toBeNull()
   })
 
-  it('DetailsPanel title falls to 详情 when the selection has no toolName and no material', () => {
+  it('DetailsPanel reports a selected call outside the current window', () => {
     localStorage.clear()
     const session = sessionSnapshot()
     const chatSnapshot = chatSnapshotFixture()
@@ -165,7 +164,6 @@ describe('render branch tails', () => {
         t={t}
       />,
     )
-    expect(view.getByText('详情')).toBeTruthy()
     expect(view.getByText('该调用不在当前窗口内')).toBeTruthy()
   })
 
@@ -229,7 +227,6 @@ describe('render branch tails', () => {
     )
     // Chat resolves the selected sub-call and keeps its Code Dispatch parent
     // identity on the block handed to the Tool-owned details seat.
-    expect(view.getByText('read')).toBeTruthy()
     expect(view.getByTestId('tool-details-seat')).toBeTruthy()
     expect(owners).toHaveLength(1)
     expect(owners[0]?.block).toMatchObject({
