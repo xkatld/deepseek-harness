@@ -118,7 +118,13 @@
         compressionLevel: 1
         compressionThresholdBytes: 1024
 
-    # Web glue owned by this bundle: resolves the built frontend dist (an
+    - id: web-auth
+      name: '@deepseek-ai/dsh-host-web-auth'
+      inject: [webStartup]
+      config:
+        username: !!js ctx.webStartup.authUser
+        password: !!js ctx.webStartup.authPassword
+
     # assembly fact of dsh-web-app, never user config), mounts the
     # frontend-static fallback owner, registers the web-surface prompt
     # section and the bash runtime variable, prints the URL line, and opens the
