@@ -64,6 +64,9 @@
       "path": "../../interaction/user-questions"
     },
     {
+      "path": "../git"
+    },
+    {
       "path": "../session-controller/tsconfig.client.json"
     },
     {

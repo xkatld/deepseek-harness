@@ -1,5 +1,5 @@
-import { Fragment } from 'react'
-import { CodeBlock } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Fragment, useEffect, useState } from 'react'
+import { CodeBlock, IconBranchOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { shallowEqual } from '@deepseek-ai/dsh-client-store'
 import type { DetailsSlotProps } from '../contract/slots.ts'
 import type { ChatSnapshot, RunningToolCall, ToolCallBlock, ToolResultNode } from '../contract/snapshot.ts'
@@ -56,11 +56,20 @@ export function DetailsPanel({ useChat, useSessions, sessionId, useStore, render
   const material = useChat(
     s => (callId === undefined ? null : materialFor(s, callId)),
     (a, b) => shallowEqual(a, b))
+  const [activeTab, setActiveTab] = useState<'tool' | 'git'>('tool')
+  useEffect(() => {
+    if (callId !== undefined) setActiveTab('tool')
+  }, [callId])
   return (
     <div className={css.root}>
       <div className={css.header}>
-        <div className={css.title}>
-          {selection === null ? t('details.title') : material?.name ?? selection.toolName ?? t('details.title')}
+        <div className={css.tabs} role="tablist" aria-label={t('details.title')}>
+          <button type="button" role="tab" aria-selected={activeTab === 'tool'} onClick={() => { setActiveTab('tool') }}>
+            {selection === null ? t('details.title') : material?.name ?? selection.toolName ?? t('details.title')}
+          </button>
+          <button type="button" role="tab" aria-selected={activeTab === 'git'} onClick={() => { setActiveTab('git') }}>
+            <IconBranchOutline16 size={14} />{t('details.gitTab')}
+          </button>
         </div>
         <button
           type="button" className={css.close} aria-label={t('details.close')}
@@ -72,38 +81,40 @@ export function DetailsPanel({ useChat, useSessions, sessionId, useStore, render
         </button>
       </div>
       <div className={css.body}>
-        {selection === null || callId === undefined
-          ? <div className={css.empty}>{t('details.empty')}</div>
-          : material === null
-            ? <div className={css.empty}>{t('details.notInWindow')}</div>
-            : (
-              <>
-                {material.argsRaw !== null && (
+        {activeTab === 'git'
+          ? renderSlot('conversation.details.git', sessionCwd === undefined ? {} : { cwd: sessionCwd })
+          : selection === null || callId === undefined
+            ? <div className={css.empty}>{t('details.empty')}</div>
+            : material === null
+              ? <div className={css.empty}>{t('details.notInWindow')}</div>
+              : (
+                <>
+                  {material.argsRaw !== null && (
+                    <section className={css.section}>
+                      <div className={css.sectionLabel}>{t('details.input')}</div>
+                      <CodeBlock code={pretty(material.argsRaw)} lang="json" copyLabel={t('copy')} copiedLabel={t('copied')} />
+                    </section>
+                  )}
                   <section className={css.section}>
-                    <div className={css.sectionLabel}>{t('details.input')}</div>
-                    <CodeBlock code={pretty(material.argsRaw)} lang="json" copyLabel={t('copy')} copiedLabel={t('copied')} />
-                  </section>
-                )}
-                <section className={css.section}>
-                  <div className={css.sectionLabel}>{t('details.output')}</div>
-                  {/* Keyed by the selected call: the body owns per-call view
+                    <div className={css.sectionLabel}>{t('details.output')}</div>
+                    {/* Keyed by the selected call: the body owns per-call view
                       state (the terminal card's expand and copy), which React
                       would otherwise carry into the next selection because the
                       panel does not unmount between calls. */}
-                  <Fragment key={callId}>
-                    {renderSlot('conversation.details.tool', { block: material.block, cwd: sessionCwd }, {
-                      fallback: 'kind' in material.block
-                        ? (
-                          <pre className={css.code} data-error={material.block.isError || undefined}>
-                            {rawResultText(material.block)}
-                          </pre>
-                        )
-                        : <div className={css.empty}>{t('details.running')}</div>,
-                    })}
-                  </Fragment>
-                </section>
-              </>
-            )}
+                    <Fragment key={callId}>
+                      {renderSlot('conversation.details.tool', { block: material.block, cwd: sessionCwd }, {
+                        fallback: 'kind' in material.block
+                          ? (
+                            <pre className={css.code} data-error={material.block.isError || undefined}>
+                              {rawResultText(material.block)}
+                            </pre>
+                          )
+                          : <div className={css.empty}>{t('details.running')}</div>,
+                      })}
+                    </Fragment>
+                  </section>
+                </>
+              )}
       </div>
     </div>
   )

@@ -83,6 +83,9 @@
       name: '@deepseek-ai/dsh-host-plugin-inventory'
 
     # Session commands, cold reads, and live control over Typert Remote.
+    - id: git-controller
+      name: '@deepseek-ai/dsh-api-git'
+
     - id: session-controller
       name: '@deepseek-ai/dsh-api-session-controller'
 
@@ -213,6 +216,9 @@
 
     - id: ui-chat
       name: '@deepseek-ai/dsh-client-ui-chat'
+
+    - id: ui-git
+      name: '@deepseek-ai/dsh-client-ui-git'
 
     # Official occupants for the generic sidebar and conversation brand slots.
     - id: ui-brand-official

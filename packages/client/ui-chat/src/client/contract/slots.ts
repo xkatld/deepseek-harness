@@ -143,10 +143,15 @@ export interface DetailsInjected {
   closeDetails: () => void
 }
 
+export interface DetailsGitOwnerProps {
+  /** Workspace root inspected by the Git panel. */
+  cwd?: string
+}
+
 /** Full details-panel props. */
 export type DetailsSlotProps =
   PropsRuntime<'details'>
-  & PropsRenderSlots<'conversation.details.tool'>
+  & PropsRenderSlots<'conversation.details.tool' | 'conversation.details.git'>
   & PropsStore<ChatStore>
   & InjectFace<DetailsInjected>
   & PropsLocale<'chat'>
@@ -206,5 +211,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      * replaces the shipped Tool details renderer; absence uses the raw fallback.
      */
     'conversation.details.tool': { kind: 'single'; scope: 'session'; owner: DetailsToolOwnerProps }
+    /** Git repository panel displayed beside Tool details. */
+    'conversation.details.git': { kind: 'single'; scope: 'session'; owner: DetailsGitOwnerProps }
   }
 }
