@@ -33,6 +33,24 @@ declare module '@deepseek-ai/cordis' {
      */
     'webserver/index-inject'(table: IndexInjection[]): void
   }
+  interface ServiceRegistry {
+    /**
+     * Register an access gate that runs before HTTP and upgrade dispatch.
+     * @param gate - owns the admission decision for one request.
+     * @returns the disposer removing the gate.
+     */
+    WebAccessGate: WebAccessGate
+  }
+}
+
+/** One request gate that can deny before dispatch. */
+export interface WebAccessGate {
+  /** Decide whether this request may reach route dispatch. */
+  allow(req: IncomingMessage): boolean
+  /** Write the refusal for a denied HTTP request. */
+  rejectHttp(res: ServerResponse, req?: IncomingMessage): void
+  /** Close a denied upgrade before protocol negotiation. */
+  rejectUpgrade(socket: Duplex): void
 }
 
 /** Route match kind: 'exact' matches the pathname verbatim; 'prefix' p matches p and p/<anything>. */
@@ -133,6 +151,7 @@ export class WebServer extends Service {
   private readonly exact = new Map<string, WebRoute>()
   private readonly prefixes = new Map<string, WebRoute>()
   private readonly upgrades = new Map<string, WebUpgradeRoute>()
+  private readonly gates = new Set<WebAccessGate>()
   private readonly upgradedSockets = new Set<Duplex>()
   private readonly indexTaps: ((html: string) => string)[] = []
   private fallback: WebRoute['handler'] | undefined
@@ -169,6 +188,16 @@ export class WebServer extends Service {
     }
     table.set(route.path, route)
     return () => { table.delete(route.path) }
+  }
+
+  /**
+   * Register an access gate that runs before HTTP and upgrade dispatch.
+   * @param gate - owns the admission decision for one request.
+   * @returns the disposer removing the gate.
+   */
+  registerGate(gate: WebAccessGate): () => void {
+    this.gates.add(gate)
+    return () => { this.gates.delete(gate) }
   }
 
   /**
@@ -218,7 +247,16 @@ export class WebServer extends Service {
 
   /** Listen; resolves once the socket is bound (rejection = FAILED fiber). */
   async [Service.init](): Promise<void> {
+    const allowDispatch = (req: IncomingMessage, res: ServerResponse): boolean => {
+      for (const gate of this.gates) {
+        if (gate.allow(req)) continue
+        gate.rejectHttp(res, req)
+        return false
+      }
+      return true
+    }
     const handle = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+      if (!allowDispatch(req, res)) return
       /* v8 ignore next -- `?? '/'` arm: node:http always sets url on server
       requests; the field is only optional on the client-side IncomingMessage type */
       const rawPath = new URL(req.url ?? '/', 'http://x').pathname
@@ -255,6 +293,11 @@ export class WebServer extends Service {
       else this.gzip(req, res, next)
     })
     this.server.on('upgrade', (req, socket, head) => {
+      for (const gate of this.gates) {
+        if (gate.allow(req)) continue
+        gate.rejectUpgrade(socket)
+        return
+      }
       const onError = (error: Error): void => {
         this.ctx.logger.warn(error)
         socket.destroy()
