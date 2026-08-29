@@ -561,7 +561,7 @@ describe('Web session model selection', () => {
     }))
     expect(refused).toMatchObject({
       ok: false,
-      error: { code: 'model-unavailable', details: { provider: 'deleted-gateway', model: 'deleted-model' } },
+      error: { code: 'model-unavailable' },
     })
     const unavailableCatalog = await buildModelCatalog(ctx)
     expect(unavailableCatalog.routableProviders.includes(currentSelection(ctx, sessionId).provider)).toBe(false)

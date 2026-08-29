@@ -284,6 +284,39 @@ describe('ApiSession model selection', () => {
     const untouched = agent(ctx, header('uninstalled-model'))
     expect(agents.consumeSelection(untouched, 'fixture', 'fixture-model', undefined)).toBe(false)
   })
+
+  it('uses the session-local pending selection ahead of the logged request header and host default', async () => {
+    const { ctx, agents } = await harness()
+    const session = agent(ctx, header('session-local-selection'))
+    const selection = agents.selectionFor(session)
+    expect(selection.current).toEqual({ provider: 'fixture', model: 'fixture-model' })
+    agents.selectForNextRequest(session, { provider: 'local-provider', model: 'local-model' })
+    expect(selection.current).toEqual({ provider: 'local-provider', model: 'local-model' })
+    session.session.append('request/header', {
+      header: { config: { provider: 'logged-provider', model: 'logged-model' } },
+      reason: 'initial',
+    })
+    expect(selection.current).toEqual({ provider: 'local-provider', model: 'local-model' })
+    agents.selectForNextRequest(session, { provider: 'next-provider', model: 'next-model' })
+    expect(selection.current).toEqual({ provider: 'next-provider', model: 'next-model' })
+  })
+
+  it('keeps separate pending selections for concurrent live sessions', async () => {
+    const { ctx, agents } = await harness()
+    const first = agent(ctx, header('parallel-first'))
+    const second = agent(ctx, header('parallel-second'))
+    agents.selectForNextRequest(first, { provider: 'first-provider', model: 'first-model' })
+    agents.selectForNextRequest(second, { provider: 'second-provider', model: 'second-model' })
+    expect(agents.selectionFor(first).current).toEqual({ provider: 'first-provider', model: 'first-model' })
+    expect(agents.selectionFor(second).current).toEqual({ provider: 'second-provider', model: 'second-model' })
+  })
+
+  it('falls back to the host default only when the Session has no local selection', async () => {
+    const { ctx, agents } = await harness()
+    const defaultSelection = ctx.agentDefaultModel.currentSelection()
+    const session = agent(ctx, header('default-fallback'))
+    expect(agents.selectionFor(session).current).toEqual(defaultSelection)
+  })
 })
 
 describe('ApiSession create or adoption', () => {
