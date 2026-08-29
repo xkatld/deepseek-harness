@@ -1,27 +1,28 @@
 # AGENTS.md — Harness Packages
 
-These package-specific rules supplement the repo-wide [conventions](../AGENTS.md#conventions).
+These rules supplement the repository-wide [conventions](../AGENTS.md#conventions). Inspect the affected package source, manifest, configuration, tests, and neighboring implementations before editing. Deleted package READMEs, architecture pages, Agent Notes, and postmortems are not prerequisites or current authorities.
 
-- **Plugin exports:** service packages default-export their service class; function plugins named-export `name` / `inject` / `Config` / `apply` and have no default export. Mixing the forms makes the Loader discard the function plugin's namespace ([postmortem](../docs/postmortem/0001-acp-default-export-drops-inject.md)).
-- **Optional services use `ctx.get(name)`.** Reserve `ctx.<name>` for declared injections; the property proxy is topology-sensitive, while strict `ctx.get` reads the global service store ([postmortem](../docs/postmortem/0001-acp-default-export-drops-inject.md)).
-- **Product-visible plugins require a non-unit REAL-composition test.** Hand-built `ctx.plugin(...)` suites are insufficient. Boot test-only `cordis.yml` through the Loader and app/process; mock only external services or nondeterministic inputs and assert model-visible, durable, or user-visible output. Keep opt-ins out of shipped defaults. [Policy](../docs/testing.md).
-- **Initiator-owned private chains derive, then capture.** Under `ctx.agents.withInitiator()`, recover the Agent at each orchestration entry, derive `agent.session`, and let operation-local helpers close over it. Keep `Agent` and `Session` explicit at lifecycle, session-log, service, authority, worker/process, persistence, and wire interfaces; do not widen a leaf helper from `Session` to `Context` merely to hide a parameter ([rationale](../.agents/notes/implemented/architecture/2026-07-15-agent-initiator-scope.md)).
-- **Represent one asynchronous operation with one lifecycle controller or transaction.** Separate readiness, cancellation, disposal, reservation, or sentinel state requires an independent owner or settlement point; otherwise fold it while preserving rollback, callback containment, and quiescence.
-- **Design Service Definitions for all current Consumers.** Keep tool-schema, Loader, UI, transport, and provider-specific behavior in the Consumer or provider; do not let one Consumer dictate the service contract ([capability-seam rationale](../.agents/notes/implemented/architecture/2026-06-13-capability-seams.md)). Inverse smell: a public service method with one internal caller — pass a private capability closure instead (`RunCodeBridgeOptions`).
-- **Require a current owner and need.** Tie each abstraction, state machine, option, defensive copy, and compatibility path to a current contract or production consumer, and keep behavior in its owning plugin or service.
-- **Require evidence for public choices.** Configurability does not justify an unsupported default, public operation set, format, or imported external concept. Use current-consumer evidence or relevant prior art; otherwise require an explicit value or defer the choice.
-- **Write model-facing contracts from the model's perspective.** Prompts, tool schemas, results, and diagnostics contain only task-relevant concepts, not UI, transport, or implementation vocabulary. Pin stable model-visible text verbatim and dynamic behavior through snapshots or end-to-end coverage.
-- **Enforce a decision in the operation that makes it.** Schema omission, prompt filtering, facades, wrappers, and listener order are not enforcement when direct or alternate callers can bypass them; test denial through the executor.
-- **Publish state only at its commit point.** Emit each notification and update derived state only after the operation succeeds; derive caches, prompts, UI echoes, replay, and query views from one authoritative source.
-- **Apply bounds to the complete result.** Enforce byte, token, item, and time limits where the complete emitted or retained value, including wrappers and metadata, is known; test tiny and exact limits, oversized single chunks, and multibyte byte limits.
-- **Registry contributions prove disposal** through the HMR-safety test required by [testing policy](../docs/testing.md): dispose the fiber and observe removal.
-- **Every package owns `./invariant`.** Register the manifest name; check an event/data relation or give empty installers package-specific `No runtime invariant:` reasons. Generated companions, unexplained empties, and ignored reporters fail [`verify-package-invariants`](../.agents/notes/implemented/architecture/2026-07-19-package-invariant-runtime-contracts.md).
+## Package behavior
 
-[Naming rules](../docs/cookbook/adding-a-package.md#name-the-role-that-exists):
+- Service packages default-export their service class. Function plugins named-export `name`, `inject`, `Config`, and `apply` and have no default export.
+- Optional services use `ctx.get(name)`. Reserve `ctx.<name>` for declared injections.
+- Product-visible plugins require a non-unit real-composition test. Boot test-only `cordis.yml` through the Loader and application or process; mock only external services or nondeterministic inputs and assert model-visible, durable, or user-visible output.
+- Under `ctx.agents.withInitiator()`, recover the Agent at each orchestration entry, derive `agent.session`, and capture it in operation-local helpers. Keep `Agent` and `Session` explicit at lifecycle, log, service, authority, worker/process, persistence, and wire interfaces.
+- Represent one asynchronous operation with one lifecycle controller or transaction. Independent readiness, cancellation, disposal, reservation, or sentinel state requires an independent owner or settlement point.
+- Design Service Definitions for all current Consumers. Keep tool schema, Loader, UI, transport, and provider-specific behavior in Consumers or providers. A public service method with one internal caller is usually a private capability closure.
+- Tie every abstraction, state machine, option, defensive copy, and compatibility path to a current contract or production consumer.
+- Require evidence for defaults, public operations, formats, and imported concepts. Otherwise require an explicit value or defer the choice.
+- Write prompts, tool schemas, results, and diagnostics from the model's perspective. Exclude UI, transport, and implementation vocabulary. Pin stable model-visible text and cover dynamic behavior through snapshots or end-to-end tests.
+- Enforce a decision in the executor that makes it. Schema omission, prompt filtering, wrappers, and listener order are not enforcement when alternate callers can bypass them.
+- Publish state and notifications only after the operation commits. Derive caches, prompts, UI echoes, replay, and query views from one authoritative source.
+- Apply byte, token, item, and time limits where the complete emitted or retained value, including wrappers and metadata, is known. Test tiny and exact limits, oversized single chunks, and multibyte byte limits.
+- Registry contributions prove disposal by disposing their fiber and observing removal.
+- Every package owns `./invariant`, registers its manifest name, and checks an event/data relationship. Packages with no runtime relationship provide a package-specific `No runtime invariant:` explanation.
 
-- **Package tsconfig:** extends `tsconfig.base.json` (Client: `tsconfig.base.client.json`), sets `rootDir: src` and `outDir: lib/types`, references workspace dependencies plus `runtime-diagnostics/invariants`, and registers in one aggregate. Packages with distinct Host and Client compiler faces use `tsconfig.host.json` and `tsconfig.client.json` leaves plus a solution-only root; ordinary two-entry Client plugins do not split ([layout](../docs/development.md#typescript-project-layout)).
-- `src/types.ts` contains only types — no runtime code.
-- Tests live at package level under `tests/`, not `src/__tests__/`.
-- Update package README and JSDoc contracts in the same commit as behavior, and verify them against code with [dsh-prose-standard](../.agents/skills/dsh-prose-standard/SKILL.md). Group READMEs declare subsystem ownership through a canonical English page link or justified [exemption](../scripts/verify-subsystem-pages.ts).
-- Package READMEs document model, token, and KV-cache effects using the [canonical Model Experience format](../docs/cookbook/adding-a-package.md#4-write-the-package-readme).
-- Package READMEs put durable consumer gaps and non-obvious maintainer constraints under `## Known Limitations and Deferred Work`; ordinary cleanup stays in its TODO or Agent Note. Packages with none use a justified [allowlist entry](../scripts/verify-package-readme-limitations.ts) ([rationale](../.agents/notes/implemented/process/2026-07-10-readme-known-limitations-gate.md)).
+## Package structure
+
+- Package tsconfigs extend the relevant root base config, set `rootDir` to `src` and `outDir` to `lib/types`, reference workspace dependencies and runtime invariants, and appear in the owning aggregate. Distinct Host and Client programs use leaf configs plus a solution-only root.
+- `src/types.ts` contains types only.
+- Tests live under package-level `tests/`, not `src/__tests__/`.
+- Keep JSDoc synchronized with behavior. Do not require deleted package READMEs or subsystem pages to be restored; if a package still owns live non-Markdown documentation or generated metadata, update that owner.
+- Run focused tests and repository checks that exercise the changed package behavior.
