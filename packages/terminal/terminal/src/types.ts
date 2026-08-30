@@ -40,6 +40,9 @@ export type TerminalSessionStatus =
   | { kind: 'running' }
   | { kind: 'exited'; exitCode: number | null; signal: NodeJS.Signals | null }
 
+/** Intended interaction contract for a spawned terminal. */
+export type TerminalProfile = 'automation' | 'interactive'
+
 /** Request to create one owner-scoped PTY session. */
 export interface TerminalSpawnRequest {
   /** Registered backend type. */
@@ -48,6 +51,12 @@ export interface TerminalSpawnRequest {
   name?: string
   /** Optional initial working directory interpreted by the backend. */
   cwd?: string
+  /** Interaction contract; defaults to automation. */
+  profile?: TerminalProfile
+  /** Initial terminal rows for interactive sessions. */
+  rows?: number
+  /** Initial terminal columns for interactive sessions. */
+  cols?: number
 }
 
 /** Fully identified request handed from the registry to a backend. */
@@ -144,6 +153,14 @@ export interface TerminalSessionSnapshot {
   status: TerminalSessionStatus
 }
 
+/** Ordered raw PTY output frame for interactive clients. */
+export interface TerminalOutputFrame {
+  /** Monotonic chunk cursor within this live terminal session. */
+  readonly cursor: number
+  /** Raw terminal data, including control sequences. */
+  readonly data: string
+}
+
 /** Backend-owned live session retained by {@link TerminalSessionService}. */
 export interface TerminalBackendSession {
   /** Initial bounded terminal output returned from `terminal_open`. */
@@ -152,6 +169,12 @@ export interface TerminalBackendSession {
   readonly pid?: number
   /** Start one exclusive send operation. */
   startSend(request: TerminalSendRequest): TerminalSendOperation
+  /** Write raw terminal input without adding Enter or waiting for readiness. */
+  write?(data: string): Promise<void>
+  /** Resize a live interactive terminal. */
+  resize?(cols: number, rows: number): Promise<void>
+  /** Follow raw terminal output after the supplied cursor. */
+  follow?(cursor: number, signal: AbortSignal): AsyncIterable<TerminalOutputFrame>
   /** Read one bounded page from retained scrollback. */
   read(request: TerminalReadRequest): TerminalReadResult
   /** Signal the verified foreground process group. */

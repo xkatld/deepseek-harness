@@ -132,6 +132,33 @@ function canReadLinuxProcessSyscall(pid: number): boolean {
 // The real-shell suite drives a POSIX bash over the actual node-pty terminal;
 // Windows has no bash, and its pwsh counterpart lives in the describe below.
 describe.skipIf(process.platform === 'win32')('terminal-bash real shell', () => {
+  it('streams raw interactive output, accepts terminal keystrokes, and resizes the PTY', async () => {
+    const { ctx, root, agent } = await harness('danger-full-access')
+    const created = await ctx.terminals.spawn(agent, {
+      type: 'shell', name: 'interactive', cwd: root, profile: 'interactive', cols: 80, rows: 24,
+    })
+    expect(created.motd).toBe('')
+
+    const controller = new AbortController()
+    const frames: string[] = []
+    const following = (async () => {
+      for await (const frame of ctx.terminals.follow(agent, created.sessionId, 0, controller.signal)) {
+        frames.push(frame.data)
+        if (frames.join('').includes('SIZE=37x111')) return
+      }
+    })()
+
+    await ctx.terminals.resize(agent, created.sessionId, 111, 37)
+    await ctx.terminals.write(agent, created.sessionId, 'printf "RAW=%s\\n" "$TERM"; printf "SIZE=%sx%s\\n" "$(tput lines)" "$(tput cols)"\r')
+    await following
+
+    const output = frames.join('')
+    expect(output).toContain('RAW=xterm-256color')
+    expect(output).toContain('SIZE=37x111')
+    controller.abort()
+    await ctx.terminals.kill(agent, created.sessionId)
+  }, 10_000)
+
   it('persists cwd and environment across sends, scrubs secrets, and closes', async () => {
     const previous = process.env.DSH_TEST_SECRET
     process.env.DSH_TEST_SECRET = 'must-not-leak'

@@ -11,6 +11,7 @@ import type {
 import { TerminalError } from '@deepseek-ai/dsh-terminal'
 import type {
   TerminalBackendSession,
+  TerminalOutputFrame,
   TerminalReadRequest,
   TerminalReadResult,
   TerminalSendOperation,
@@ -198,6 +199,10 @@ export class LocalPtySession implements TerminalBackendSession {
   private responseWrites = Promise.resolve()
   private pendingResponseWrites = 0
   private emulatorClosed = false
+  private rawCursor = 0
+  private rawBytes = 0
+  private readonly rawFrames: TerminalOutputFrame[] = []
+  private readonly rawFollowers = new Set<() => void>()
 
   constructor(
     private readonly terminal: SubprocessTerminalHandle,
@@ -245,6 +250,52 @@ export class LocalPtySession implements TerminalBackendSession {
       throw error
     } finally {
       this.initializing = false
+    }
+  }
+
+  async write(data: string): Promise<void> {
+    if (this.closing) throw new Error('PTY session is closing')
+    if (this.statusValue.kind === 'exited') throw new Error('PTY session has exited')
+    if (this.active !== undefined) throw new TerminalError('PTY session already has an active send', 'SEND_ACTIVE')
+    await this.terminal.write(data)
+  }
+
+  async resize(cols: number, rows: number): Promise<void> {
+    if (!Number.isSafeInteger(cols) || cols <= 0 || !Number.isSafeInteger(rows) || rows <= 0) {
+      throw new Error('terminal dimensions must be positive safe integers')
+    }
+    if (this.terminal.resize === undefined) throw new Error('terminal provider does not support resize')
+    await this.terminal.resize(cols, rows)
+    this.emulator.resize(cols, rows)
+  }
+
+  async *follow(cursor: number, signal: AbortSignal): AsyncIterable<TerminalOutputFrame> {
+    if (!Number.isSafeInteger(cursor) || cursor < 0) throw new Error('terminal output cursor must be a non-negative safe integer')
+    for (;;) {
+      signal.throwIfAborted()
+      const available = this.rawFrames.filter(frame => frame.cursor > cursor)
+      if (available.length > 0) {
+        for (const frame of available) {
+          cursor = frame.cursor
+          yield frame
+        }
+        continue
+      }
+      if (this.statusValue.kind === 'exited' || this.closing) return
+      await new Promise<void>((resolve, reject) => {
+        const wake = (): void => { cleanup(); resolve() }
+        const abort = (): void => {
+          cleanup()
+          reject(signal.reason instanceof Error ? signal.reason : new Error('terminal output stream aborted'))
+        }
+        const cleanup = (): void => {
+          this.rawFollowers.delete(wake)
+          signal.removeEventListener('abort', abort)
+        }
+        this.rawFollowers.add(wake)
+        signal.addEventListener('abort', abort, { once: true })
+        if (this.rawFrames.some(frame => frame.cursor > cursor) || this.statusValue.kind === 'exited' || this.closing) wake()
+      })
     }
   }
 
@@ -386,6 +437,7 @@ export class LocalPtySession implements TerminalBackendSession {
 
   close(reason: string): Promise<void> {
     this.closing = true
+    for (const wake of [...this.rawFollowers]) wake()
     if (this.closePromise !== undefined) return this.closePromise
     const closing = this.closeOnce(reason).catch((error: unknown) => {
       this.closePromise = undefined
@@ -417,6 +469,16 @@ export class LocalPtySession implements TerminalBackendSession {
   }
 
   private onData(data: string): void {
+    if (data.length > 0) {
+      const frame = { cursor: ++this.rawCursor, data }
+      this.rawFrames.push(frame)
+      this.rawBytes += Buffer.byteLength(data)
+      while (this.rawFrames.length > 1 && this.rawBytes > this.config.scrollbackMaxBytes) {
+        const dropped = this.rawFrames.shift()
+        if (dropped !== undefined) this.rawBytes -= Buffer.byteLength(dropped.data)
+      }
+      for (const wake of [...this.rawFollowers]) wake()
+    }
     const sanitized = this.sanitizer.push(data)
     this.appendOutput(sanitized.text)
     if (sanitized.prompt) {
@@ -441,6 +503,7 @@ export class LocalPtySession implements TerminalBackendSession {
     await this.outputEnded.promise
     if (this.transportFailure !== undefined) return
     this.statusValue = { kind: 'exited', exitCode: outcome.exitCode, signal: outcome.signal }
+    for (const wake of [...this.rawFollowers]) wake()
     this.settleActive('session_exit')
   }
 

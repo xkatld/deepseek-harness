@@ -10,6 +10,7 @@ import { TerminalBackendCleanupError } from './types.ts'
 import type {
   TerminalBackend,
   TerminalBackendSession,
+  TerminalOutputFrame,
   TerminalReadRequest,
   TerminalReadResult,
   TerminalSendOperation,
@@ -26,6 +27,8 @@ export type {
   TerminalBackend,
   TerminalBackendSession,
   TerminalBackendSpawnSpec,
+  TerminalOutputFrame,
+  TerminalProfile,
   TerminalReadRequest,
   TerminalReadResult,
   TerminalSendOperation,
@@ -173,6 +176,9 @@ export class TerminalSessionService extends Service {
         type: request.type,
         ...request.name !== undefined ? { name: request.name } : {},
         ...request.cwd !== undefined ? { cwd: request.cwd } : {},
+        ...request.profile !== undefined ? { profile: request.profile } : {},
+        ...request.rows !== undefined ? { rows: request.rows } : {},
+        ...request.cols !== undefined ? { cols: request.cols } : {},
         signal: backendSignal,
       })
       signal?.throwIfAborted()
@@ -231,6 +237,27 @@ export class TerminalSessionService extends Service {
   hasOwnerActivity(owner: Agent): boolean {
     return (this.pendingSpawns.get(owner)?.size ?? 0) > 0
       || [...this.sessions.values()].some(record => record.owner === owner)
+  }
+
+  async write(owner: Agent, id: TerminalSessionId, data: string): Promise<void> {
+    const record = this.expectOwned(owner, id)
+    if (record.closing !== undefined) throw new Error(`PTY session ${id} is closing`)
+    if (record.session.write === undefined) throw new Error(`PTY backend "${record.type}" does not support raw input`)
+    await record.session.write(data)
+  }
+
+  async resize(owner: Agent, id: TerminalSessionId, cols: number, rows: number): Promise<void> {
+    const record = this.expectOwned(owner, id)
+    if (record.closing !== undefined) throw new Error(`PTY session ${id} is closing`)
+    if (record.session.resize === undefined) throw new Error(`PTY backend "${record.type}" does not support resize`)
+    await record.session.resize(cols, rows)
+  }
+
+  follow(owner: Agent, id: TerminalSessionId, cursor: number, signal: AbortSignal): AsyncIterable<TerminalOutputFrame> {
+    const record = this.expectOwned(owner, id)
+    if (record.closing !== undefined) throw new Error(`PTY session ${id} is closing`)
+    if (record.session.follow === undefined) throw new Error(`PTY backend "${record.type}" does not support output streaming`)
+    return record.session.follow(cursor, signal)
   }
 
   /**

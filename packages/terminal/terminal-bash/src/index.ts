@@ -56,14 +56,15 @@ function ensureSandboxModeFence(ctx: Context, owner: Agent): void {
 function childEnvironment(spec: TerminalBackendSpawnSpec, dialect: ShellDialect): Record<string, string> {
   // The subprocess provider supplies its own scrubbed ambient base; these are
   // deliberate terminal-specific overrides layered after it.
+  const interactive = spec.profile === 'interactive'
   const common = {
-    TERM: 'dumb',
-    PAGER: 'cat',
-    GIT_PAGER: 'cat',
+    TERM: interactive ? 'xterm-256color' : 'dumb',
+    ...interactive ? { COLORTERM: 'truecolor' } : { PAGER: 'cat', GIT_PAGER: 'cat' },
     DSH_SHELL: '1',
     DSH_SESSION_ID: spec.owner.id,
     DSH_PTY_SESSION_ID: spec.sessionId,
   }
+  if (interactive) return common
   if (dialect === 'pwsh') {
     // pwsh ignores PS1/PROMPT_COMMAND; its prompt is installed by the startup
     // bootstrap instead, and NO_COLOR keeps the renderer quiet.
@@ -186,18 +187,25 @@ export class BashTerminalBackend implements TerminalBackend {
     const policy = this.ctx.sandboxPolicy.resolve({ session: spec.owner.session })
     const argv = spawnArgv(this.ctx, this.config, policy)
     if (argv[0] === undefined) throw new Error('terminal-bash: sandbox returned empty argv')
+    const effectiveConfig = {
+      ...this.config,
+      rows: spec.rows ?? this.config.rows,
+      cols: spec.cols ?? this.config.cols,
+    }
     const terminal = await this.spawnTerminal({
       argv,
       cwd: spec.cwd ?? policy.workspaceRoot,
       env: childEnvironment(spec, this.config.shellDialect),
-      rows: this.config.rows,
-      cols: this.config.cols,
+      rows: effectiveConfig.rows,
+      cols: effectiveConfig.cols,
       graceMs: this.config.disposeGraceMs,
       signal: spec.signal,
     })
-    const session = this.createSession(terminal, this.config)
+    const session = this.createSession(terminal, effectiveConfig)
     try {
-      await startupSession(session, this.config.shellDialect, this.config.timeoutMs, spec.signal)
+      if (spec.profile !== 'interactive') {
+        await startupSession(session, this.config.shellDialect, this.config.timeoutMs, spec.signal)
+      }
       return session
     } catch (error) {
       try {

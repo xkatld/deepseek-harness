@@ -57,6 +57,18 @@ class StubSession implements TerminalBackendSession {
   rejectClose = false
   closeGate: PromiseWithResolvers<undefined> | undefined
 
+  readonly writes: string[] = []
+  readonly sizes: Array<[number, number]> = []
+
+  async write(data: string): Promise<void> { this.writes.push(data) }
+
+  async resize(cols: number, rows: number): Promise<void> { this.sizes.push([cols, rows]) }
+
+  async *follow(cursor: number, signal: AbortSignal) {
+    signal.throwIfAborted()
+    yield { cursor: cursor + 1, data: 'raw output' }
+  }
+
   startSend(_request: TerminalSendRequest): TerminalSendOperation {
     if (this.rejectSend) {
       return { done: Promise.reject(new Error('send failed')), readOutput: () => ({ delta: '', truncated: false }), cancel: () => false }
@@ -175,6 +187,7 @@ describe('TerminalSessionService ownership and lifecycle', () => {
   it('rejects unknown backends, non-live owners, duplicate names, and active sends', async () => {
     const ctx = await harness()
     const owner = stubAgent(ctx, 'owner')
+    const foreign = stubAgent(ctx, 'foreign')
     await expect(ctx.terminals.spawn(owner, { type: 'missing' })).rejects.toMatchObject({ code: 'OWNER_NOT_LIVE' })
     ctx.agents.register(owner)
     await expect(ctx.terminals.spawn(owner, { type: 'missing' })).rejects.toMatchObject({ code: 'NO_BACKEND' })
@@ -187,6 +200,15 @@ describe('TerminalSessionService ownership and lifecycle', () => {
     aborted.abort(abortReason)
     await expect(ctx.terminals.spawn(owner, { type: 'stub' }, aborted.signal)).rejects.toBe(abortReason)
     await expect(ctx.terminals.spawn(owner, { type: 'stub', name: 'main' })).rejects.toMatchObject({ code: 'DUPLICATE_NAME' })
+
+    await ctx.terminals.write(owner, created.sessionId, '\x1b[A')
+    await ctx.terminals.resize(owner, created.sessionId, 120, 40)
+    expect(b.sessions[0]!.writes).toEqual(['\x1b[A'])
+    expect(b.sessions[0]!.sizes).toEqual([[120, 40]])
+    const frames: unknown[] = []
+    for await (const frame of ctx.terminals.follow(owner, created.sessionId, 0, new AbortController().signal)) frames.push(frame)
+    expect(frames).toEqual([{ cursor: 1, data: 'raw output' }])
+    await expect(ctx.terminals.write(foreign, created.sessionId, 'x')).rejects.toThrow('belongs to another agent')
 
     const operation = ctx.terminals.startSend(owner, created.sessionId, { text: 'echo hi', submit: true })
     expect(() => ctx.terminals.startSend(owner, created.sessionId, { text: 'pwd', submit: true })).toThrow(TerminalError)

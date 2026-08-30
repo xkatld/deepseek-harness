@@ -541,9 +541,14 @@ function clientConfig(id: string, entry: string): UserConfig {
       },
     }, {
       name: 'dsh-css-global-inline',
-      resolveId(source: string, importer: string | undefined) {
+      async resolveId(source: string, importer: string | undefined) {
         if (!source.endsWith('.css') || source.endsWith('.module.css')) return null
-        const abs = importer !== undefined ? sourceAssetPath(source, importer) : source
+        const abs = importer === undefined
+          ? source
+          : isBareSpecifier(source)
+            ? (await this.resolve(source, importer, { skipSelf: true }))?.id
+            : sourceAssetPath(source, importer)
+        if (abs === undefined) return null
         return GLOBAL_CSS_VIRTUAL_PREFIX + abs + CSS_VIRTUAL_SUFFIX
       },
       async load(virtualId: string) {

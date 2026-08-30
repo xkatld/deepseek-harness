@@ -626,6 +626,15 @@ export const IconFullscreenOutline16 = ({ size = 16, className }: IconProps) => 
   </svg>
 )
 
+/** Terminal window with a command prompt. */
+export const IconTerminalOutline16 = ({ size = 16, className }: IconProps) => (
+  <svg width={size} height={size} className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="1.5" y="2.25" width="13" height="11.5" rx="2" stroke="currentColor" strokeWidth="1.35" />
+    <path d="M4 5.25L6.5 7.5L4 9.75" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M8 10H11.5" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+  </svg>
+)
+
 /** ic_ds_code_outline_16 */
 export const IconCodeOutline16 = ({ size = 16, className }: IconProps) => (
   <svg width={size} height={size} className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
