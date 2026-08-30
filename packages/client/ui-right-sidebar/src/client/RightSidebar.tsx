@@ -1,4 +1,5 @@
 import type { DetailsOwnerProps } from '@deepseek-ai/dsh-client-ui-layout/client'
+import { IconPanelRightOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
 import type { createRightSidebarStore } from './stores.ts'
 import css from './RightSidebar.module.css'
@@ -16,7 +17,7 @@ export interface RightSidebarContentOwnerProps {
   closeDetails: () => void
 }
 
-interface ShellInjected { activate: (id: string) => void; close: () => void }
+interface ShellInjected { activate: (id: string) => void; expand: () => void; close: () => void }
 type ShellProps = PropsRuntime<'details'>
   & DetailsOwnerProps
   & PropsRenderSlots<'right-sidebar.tabs' | 'right-sidebar.content'>
@@ -25,7 +26,9 @@ type ShellProps = PropsRuntime<'details'>
   & InjectFace<ShellInjected>
 
 /** Render the generic right-sidebar chrome around feature contributions. */
-export function RightSidebarShell({ collapsed, useStore, useSessions, SessionProvider, renderSlot, activate, close, t }: ShellProps) {
+export function RightSidebarShell({
+  collapsed, useStore, useSessions, SessionProvider, renderSlot, activate, expand, close, t,
+}: ShellProps) {
   const activeId = useStore(state => state.activeId)
   const cwd = useSessions((state) => {
     const current = state.current
@@ -37,11 +40,13 @@ export function RightSidebarShell({ collapsed, useStore, useSessions, SessionPro
         <div className={css.tabs} role="tablist" aria-label={t('tabs')}>
           <SessionProvider>{renderSlot('right-sidebar.tabs', { activeId, collapsed, activate })}</SessionProvider>
         </div>
-        {!collapsed && <button type="button" className={css.close} aria-label={t('close')} onClick={close}>
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden>
-            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>}
+        {collapsed
+          ? <button type="button" className={css.toggle} aria-label={t('open')} title={t('open')} onClick={expand}>
+            <IconPanelRightOutline16 size={18} />
+          </button>
+          : <button type="button" className={css.toggle} aria-label={t('close')} title={t('close')} onClick={close}>
+            <IconPanelRightOutline16 size={16} />
+          </button>}
       </header>
       {!collapsed && <div className={css.body}>
         {activeId === null

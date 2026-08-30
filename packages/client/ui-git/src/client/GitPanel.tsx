@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { IconBranchOutline16, IconPanelLeftOutline16, IconRefreshOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconBranchOutline16, IconChevronLeftOutline14, IconRefreshOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { GitCommitFilesValue, GitDiffValue, GitHistoryEntry, GitHistoryValue, GitStatusView } from '@deepseek-ai/dsh-api-git/types'
 import type { RightSidebarContentOwnerProps } from '@deepseek-ai/dsh-client-ui-right-sidebar/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
@@ -46,13 +46,19 @@ export function GitPanel({ cwd, status: loadStatus, history: loadHistory, commit
     return () => { active = false }
   }, [commitFiles, cwd, diff, selected])
   return <div className={css.root}>
-    <div className={css.toolbar}><div><div className={css.heading}>{t('repository')}</div><div className={css.path}>{cwd ?? t('currentWorkspace')}</div></div><button className={css.iconButton} type="button" aria-label={t('refresh')} onClick={() => { void refresh() }} disabled={loading}><IconRefreshOutline16 size={16} className={loading ? css.spinning : undefined} /></button></div>
+    <div className={css.toolbar}>
+      <div><div className={css.heading}>{t('repository')}</div><div className={css.path}>{cwd ?? t('currentWorkspace')}</div></div>
+      <div className={css.toolbarActions}>
+        {view === 'detail' && <button className={css.iconButton} type="button" aria-label={t('backToList')} title={t('backToList')} onClick={() => { setView('list') }}><IconChevronLeftOutline14 size={16} /></button>}
+        <button className={css.iconButton} type="button" aria-label={t('refresh')} onClick={() => { void refresh() }} disabled={loading}><IconRefreshOutline16 size={16} className={loading ? css.spinning : undefined} /></button>
+      </div>
+    </div>
     <div className={css.viewTabs} role="tablist" aria-label={t('title')}><button type="button" role="tab" aria-selected={view === 'list'} onClick={() => { setView('list') }}>{t('listTab')}</button><button type="button" role="tab" aria-selected={view === 'detail'} onClick={() => { setView('detail') }}>{t('detailTab')}</button></div>
     {view === 'list' ? <div className={css.scroll} role="tabpanel">
       {loading && status === null && <div className={css.state}>{t('loading')}</div>}{!available && <div className={css.state}>{t('unavailable')}</div>}
       {available && status !== null && <Status status={status} t={t} />}
       {available && status !== null && <section className={css.section}><div className={css.sectionHeader}><span>{t('history')}</span><span className={css.count}>{history.length}</span></div>{history.length === 0 ? <div className={css.state}>{t('emptyHistory')}</div> : <div className={css.history}>{history.map(entry => <button key={entry.commit} type="button" className={css.commit} aria-pressed={entry.commit === selected} onClick={() => { setSelected(entry.commit); setView('detail') }}><span className={css.commitRail}><span className={css.commitLine} /><span className={css.commitDot} /></span><span className={css.commitContent}><span className={css.commitSummary}>{entry.summary}</span><span className={css.commitMeta}><span>{entry.author}</span><span>{formatDate(entry.date)}</span><code>{shortCommit(entry.commit)}</code></span></span></button>)}</div>}</section>}
-    </div> : <div className={css.scroll} role="tabpanel"><div className={css.detailToolbar}><button type="button" className={css.backButton} onClick={() => { setView('list') }}><IconPanelLeftOutline16 size={14} />{t('backToList')}</button></div>{detail === null ? <div className={css.state}>{t('emptyDetail')}</div> : <DetailView detail={detail} t={t} />}</div>}
+    </div> : <div className={css.scroll} role="tabpanel">{detail === null ? <div className={css.state}>{t('emptyDetail')}</div> : <DetailView detail={detail} t={t} />}</div>}
   </div>
 }
 

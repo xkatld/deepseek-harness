@@ -33,6 +33,13 @@
   white-space: nowrap;
 }
 
+.toolbarActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
 .iconButton {
   display: grid;
   flex: none;
@@ -332,41 +339,8 @@
   text-align: center;
 }
 
-.detailToolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 14px 10px;
-}
-
-.detailToolbar code {
-  color: var(--dsw-alias-label-tertiary);
-  font-family: var(--ds-font-family-code);
-  font-size: 11px;
-}
-
-.backButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 8px 5px 5px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--dsw-alias-label-secondary);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.backButton:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
-}
-
 .detailSection {
-  padding: 0 14px 18px;
+  padding: 14px 14px 18px;
 }
 
 .detail {

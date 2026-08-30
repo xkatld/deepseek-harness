@@ -35,6 +35,7 @@ describe('RightSidebar UI', () => {
         collapsed={false}
         width={360}
         activate={instance.actions.activate}
+        expand={vi.fn()}
         close={close}
         t={t}
         renderSlot={((key: string, owner: RightSidebarTabOwnerProps | RightSidebarContentOwnerProps, options?: { only?: string }) => {
@@ -58,6 +59,7 @@ describe('RightSidebar UI', () => {
   it('keeps plugin tabs visible in the collapsed rail and hides panel content', () => {
     const instance = createRightSidebarStore().create()
     const activate = vi.fn()
+    const expand = vi.fn()
     const rendered: string[] = []
     render(
       <RightSidebarShell
@@ -71,6 +73,7 @@ describe('RightSidebar UI', () => {
           selector(instance.store.getSnapshot())) as never}
         actions={instance.actions}
         activate={activate}
+        expand={expand}
         close={vi.fn()}
         t={t}
         renderSlot={((key: string, owner: RightSidebarTabOwnerProps) => {
@@ -86,6 +89,8 @@ describe('RightSidebar UI', () => {
 
     expect(rendered).toEqual(['right-sidebar.tabs'])
     expect(activate).toHaveBeenCalledWith('git')
+    fireEvent.click(screen.getByRole('button', { name: 'Open right sidebar' }))
+    expect(expand).toHaveBeenCalledOnce()
     expect(screen.queryByRole('button', { name: 'Close right sidebar' })).toBeNull()
   })
 })

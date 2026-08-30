@@ -83,6 +83,11 @@ describe('GitPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /Fix panel/ }))
     expect(await screen.findByText('src/index.ts')).toBeTruthy()
     expect(screen.getByText('diff --git a/src/index.ts b/src/index.ts')).toBeTruthy()
+    const back = screen.getByRole('button', { name: en.backToList })
+    const refresh = screen.getByRole('button', { name: en.refresh })
+    expect(back.parentElement).toBe(refresh.parentElement)
+    fireEvent.click(back)
+    expect(screen.getByText('Fix panel')).toBeTruthy()
     await waitFor(() => {
       expect(commitFiles).toHaveBeenCalledWith('/repo', 'abcdef1234567890')
       expect(diff).toHaveBeenCalledWith('/repo', 'abcdef1234567890')

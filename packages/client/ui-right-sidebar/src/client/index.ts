@@ -42,7 +42,11 @@ export function apply(ctx: Context): void {
       store,
       inject: (actions: BoundActions<typeof store>) => {
         service.attach(actions)
-        return { activate: (id: string) => { service.open(id) }, close: () => { service.close() } }
+        return {
+          activate: (id: string) => { service.open(id) },
+          expand: () => { service.show() },
+          close: () => { service.close() },
+        }
       },
     }, RightSidebarShell))
     return () => { disposeShell(); void disposeService() }

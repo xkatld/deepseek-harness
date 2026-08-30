@@ -1,4 +1,4 @@
-import { IconBranchOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconGitOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import css from './GitContributions.module.css'
 
@@ -8,7 +8,7 @@ type GitTabProps = PropsRuntime<'right-sidebar.tabs'> & PropsLocale<'gitPanel'>
 export function GitTab({ activeId, collapsed, activate, t }: GitTabProps) {
   return (
     <button type="button" className={css.tab} role="tab" aria-label={collapsed ? t('title') : undefined} title={collapsed ? t('title') : undefined} aria-selected={activeId === 'git'} onClick={() => { activate('git') }}>
-      <IconBranchOutline16 size={collapsed ? 18 : 14} />{!collapsed && t('title')}
+      <IconGitOutline16 size={collapsed ? 20 : 16} />{!collapsed && t('title')}
     </button>
   )
 }
