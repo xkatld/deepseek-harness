@@ -1,0 +1,8 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "lib/types", "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo" },
+  "include": ["src/index.ts", "src/types.ts", "src/invariant.ts"],
+  "references": [
+    { "path": "../../../vendor/cordis" }, { "path": "../../api/session-controller/tsconfig.host.json" }, { "path": "../../terminal/terminal" }, { "path": "../../typert/protocol" }, { "path": "../../runtime-diagnostics/invariants" }
+  ]
+}

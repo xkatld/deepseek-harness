@@ -50,7 +50,7 @@ describe('RightSidebar UI', () => {
     expect(screen.getByRole('complementary', { name: 'Right sidebar' })).toBeTruthy()
     expect(tabOwner?.activeId).toBe('panel-a')
     expect(tabOwner?.collapsed).toBe(false)
-    expect(contentOwner).toEqual({ cwd: '/repo', closeDetails: close })
+    expect(contentOwner).toEqual({ cwd: '/repo', sessionId: 's1', closeDetails: close })
     expect(contentOnly).toBe('panel-a')
     fireEvent.click(screen.getByRole('button', { name: 'Close right sidebar' }))
     expect(close).toHaveBeenCalledOnce()

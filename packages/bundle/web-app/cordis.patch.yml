@@ -86,6 +86,15 @@
     - id: git-controller
       name: '@deepseek-ai/dsh-api-git'
 
+    - id: shell-controller
+      name: '@deepseek-ai/dsh-api-shell'
+
+    - id: terminals
+      name: '@deepseek-ai/dsh-terminal'
+
+    - id: terminal-bash
+      name: '@deepseek-ai/dsh-terminal-bash'
+
     - id: session-controller
       name: '@deepseek-ai/dsh-api-session-controller'
 
@@ -222,6 +231,9 @@
 
     - id: ui-git
       name: '@deepseek-ai/dsh-client-ui-git'
+
+    - id: ui-shell
+      name: '@deepseek-ai/dsh-client-ui-shell'
 
     # Official occupants for the generic sidebar and conversation brand slots.
     - id: ui-brand-official

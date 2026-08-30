@@ -14,6 +14,7 @@ export interface RightSidebarTabOwnerProps {
 /** Data passed by the sidebar shell to the active content contribution. */
 export interface RightSidebarContentOwnerProps {
   cwd?: string
+  sessionId?: string | undefined
   closeDetails: () => void
 }
 
@@ -29,6 +30,7 @@ type ShellProps = PropsRuntime<'details'>
 export function RightSidebarShell({
   collapsed, useStore, useSessions, SessionProvider, renderSlot, activate, expand, close, t,
 }: ShellProps) {
+  const sessionId = useSessions(state => state.current)
   const activeId = useStore(state => state.activeId)
   const cwd = useSessions((state) => {
     const current = state.current
@@ -51,7 +53,7 @@ export function RightSidebarShell({
       {!collapsed && <div className={css.body}>
         {activeId === null
           ? <div className={css.empty}>{t('empty')}</div>
-          : renderSlot('right-sidebar.content', { ...(cwd === undefined ? {} : { cwd }), closeDetails: close }, { only: activeId, fallback: <div className={css.empty}>{t('unavailable')}</div> })}
+          : renderSlot('right-sidebar.content', { ...(cwd === undefined ? {} : { cwd }), ...(sessionId === null ? {} : { sessionId }), closeDetails: close }, { only: activeId, fallback: <div className={css.empty}>{t('unavailable')}</div> })}
       </div>}
     </aside>
   )

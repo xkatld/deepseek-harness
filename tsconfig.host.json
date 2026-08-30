@@ -146,6 +146,7 @@
     { "path": "./packages/typert/registry" },
     { "path": "./packages/api/gateway/tsconfig.host.json" },
     { "path": "./packages/api/git" },
+    { "path": "./packages/api/shell/tsconfig.host.json" },
     { "path": "./packages/api/remotes/tsconfig.host.json" },
     { "path": "./packages/api/session-controller/tsconfig.host.json" },
     { "path": "./packages/api/settings-controller" },
