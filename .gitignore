@@ -3,6 +3,16 @@ CLAUDE.local.md
 node_modules/
 lib/
 *.tsbuildinfo
+# TypeScript emit belongs in package lib/ outputs, never beside source files.
+packages/**/src/**/*.js
+packages/**/src/**/*.js.map
+packages/**/src/**/*.d.ts
+packages/**/src/**/*.d.ts.map
+vendor/**/src/**/*.js
+vendor/**/src/**/*.js.map
+vendor/**/src/**/*.d.ts
+vendor/**/src/**/*.d.ts.map
+packages/**/dist/
 pnpm-debug.log
 .pnpm-store/
 .cache/
