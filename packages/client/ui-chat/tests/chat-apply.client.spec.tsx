@@ -49,7 +49,7 @@ async function bench() {
   runtime.slots.installLocale(locale)
   await runtime.root.declare({
     'conversation': { kind: 'single', scope: 'session-maybe' },
-    'details': { kind: 'single', scope: 'session' },
+    'details': { kind: 'single', scope: 'root' },
     'right-sidebar.tabs': { kind: 'list', scope: 'session' },
     'right-sidebar.content': { kind: 'list', scope: 'session' },
     'conversation.approval.detail': { kind: 'single', scope: 'session' },
@@ -82,8 +82,8 @@ describe('Chat apply wiring', () => {
       .toEqual(['stats'])
     expect(b.runtime.slots.entries('settings.general.item').map(row => row.options.id))
       .toEqual(['transcript-view', 'composer-enter'])
-    expect(b.runtime.slots.entries('right-sidebar.tabs').map(row => row.options.id)).toEqual(['tool'])
-    expect(b.runtime.slots.entries('right-sidebar.content').map(row => row.options.id)).toEqual(['tool'])
+    expect(b.runtime.slots.entries('right-sidebar.tabs')).toHaveLength(0)
+    expect(b.runtime.slots.entries('right-sidebar.content')).toHaveLength(0)
     await b.runtime.dispose()
   })
 
@@ -110,7 +110,6 @@ describe('Chat apply wiring', () => {
     const conversationStore = storeOf(b.runtime, 'conversation.session')
     const chatStore = storeOf(b.runtime, 'conversation.view')
     expect(storeOf(b.runtime, 'conversation.session.header')).toBe(conversationStore)
-    expect(storeOf(b.runtime, 'right-sidebar.content')).toBe(chatStore)
     expect(chatStore).toBeDefined()
     expect(chatStore).not.toBe(conversationStore)
     await b.runtime.dispose()

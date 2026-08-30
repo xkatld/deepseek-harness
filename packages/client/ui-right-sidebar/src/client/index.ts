@@ -4,8 +4,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type { BoundActions } from '@deepseek-ai/dsh-client-ui-slots'
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import { RightSidebarOpener, RightSidebarShell, type RightSidebarContentOwnerProps, type RightSidebarTabOwnerProps } from './RightSidebar.tsx'
+import { RightSidebarShell, type RightSidebarContentOwnerProps, type RightSidebarTabOwnerProps } from './RightSidebar.tsx'
 import { RightSidebarController, type IRightSidebar } from './service.ts'
 import { createRightSidebarStore } from './stores.ts'
 import { en, type RightSidebarKey, zh } from './locales.ts'
@@ -41,16 +40,12 @@ export function apply(ctx: Context): void {
         'right-sidebar.content': { kind: 'list', scope: 'session' },
       },
       store,
-      inject: (_sessionId: SessionId, actions: BoundActions<typeof store>) => {
+      inject: (actions: BoundActions<typeof store>) => {
         service.attach(actions)
-        return { close: () => { service.close() } }
+        return { activate: (id: string) => { service.open(id) }, close: () => { service.close() } }
       },
     }, RightSidebarShell))
-    const disposeOpener = ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
-      name: 'conversation.input.right', id: 'right-sidebar', order: 25, locale: NS,
-      inject: () => ({ show: () => { service.show() } }),
-    }, RightSidebarOpener))
-    return () => { disposeOpener(); disposeShell(); void disposeService() }
+    return () => { disposeShell(); void disposeService() }
   }, 'ui-right-sidebar: service and slots')
 }
 

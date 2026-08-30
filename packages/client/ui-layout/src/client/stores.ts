@@ -1,7 +1,8 @@
 /**
  * The root entry's transient layout store: panel geometry as plain widths in
- * px (0 = closed). Module level exports the factory only — a module-level
- * handle would pin the store's identity in the module
+ * px. The left panel uses 0 as its collapsed preference; the right panel keeps
+ * its last expanded width and records collapse separately. Module-level code
+ * exports the factory only — a module-level handle would pin the store's identity in the module
  * cache (a de-facto singleton surviving plugin reloads). register() receives
  * the factory (exclusive use: the framework instantiates per entry), AppFrame
  * derives its PropsStore share from the return type, and the service face
@@ -20,7 +21,7 @@ import {
  * `narrowExpanded` is the manual override that re-expands the auto-collapsed
  * sidebar over the squeezed center without rewriting the width preference.
  */
-type LayoutState = { sidebar: number; details: number; narrow: boolean; narrowExpanded: boolean }
+type LayoutState = { sidebar: number; details: number; detailsCollapsed: boolean; narrow: boolean; narrowExpanded: boolean }
 
 /**
  * Annotation twin of the actions literal below (the export needs a declared
@@ -47,7 +48,13 @@ type LayoutActions = {
  */
 export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutActions>  {
   const handle = defineStore({
-    init: (): LayoutState => ({ sidebar: SIDEBAR_DEFAULT, details: 0, narrow: false, narrowExpanded: false }),
+    init: (): LayoutState => ({
+      sidebar: SIDEBAR_DEFAULT,
+      details: DETAILS_DEFAULT,
+      detailsCollapsed: true,
+      narrow: false,
+      narrowExpanded: false,
+    }),
     actions: {
       setSidebar: (d, px: number) => { d.sidebar = clampWidth(px, SIDEBAR_MIN, SIDEBAR_MAX) },
       setDetails: (d, px: number) => { d.details = clampWidth(px, DETAILS_MIN, DETAILS_MAX) },
@@ -64,8 +71,8 @@ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutAction
         d.narrow = narrow
         d.narrowExpanded = false
       },
-      openDetails: (d) => { if (d.details === 0) d.details = DETAILS_DEFAULT },
-      closeDetails: (d) => { d.details = 0 },
+      openDetails: (d) => { d.detailsCollapsed = false },
+      closeDetails: (d) => { d.detailsCollapsed = true },
     },
   })
   return handle

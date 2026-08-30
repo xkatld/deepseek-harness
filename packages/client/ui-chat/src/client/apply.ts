@@ -9,11 +9,10 @@ import { resolveWorkspacePath } from '@deepseek-ai/dsh-util-workspace-path'
 // Type-only service and declaration merges used by the apply world.
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type {} from '@deepseek-ai/dsh-client-ui-right-sidebar/client'
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type {
   ChatNodeTurnDataInjected, ChatScrollPosition, ChatViewInjected,
   TurnTailOwnerProps,
@@ -25,7 +24,6 @@ import { ChatView } from './chat/ChatView.tsx'
 import { registerChatNodeRenderers } from './chat/register-node-renderers.ts'
 import { StatsLine } from './chat/StatsLine.tsx'
 import { registerConversationNodes } from './conversation-nodes/register.ts'
-import { DetailsPanel, ToolDetailsTab } from './details/DetailsPanel.tsx'
 import { en, NS, zh } from './locale.ts'
 import { TranscriptViewRow, type TranscriptViewRowInjected } from './settings/TranscriptViewRow.tsx'
 import { createChatStore } from './stores.ts'
@@ -157,16 +155,4 @@ export function apply(ctx: Context): void {
   ctx.slots.inject('conversation.approval.detail', () =>
     ctx.slots.register({ name: 'conversation.approval.detail' }, ApprovalCommand))
 
-  ctx.slots.inject('right-sidebar.tabs', () => ctx.slots.register({
-    name: 'right-sidebar.tabs', id: 'tool', order: 0, locale: NS, store: chatStore,
-  }, ToolDetailsTab))
-
-  ctx.slots.inject('right-sidebar.content', () => ctx.slots.register({
-    name: 'right-sidebar.content',
-    id: 'tool',
-    order: 0,
-    locale: NS,
-    children: { 'conversation.details.tool': { kind: 'single', scope: 'session' } },
-    store: chatStore,
-  }, DetailsPanel))
 }

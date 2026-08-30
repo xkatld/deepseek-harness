@@ -42,10 +42,9 @@
   border-left: 1px solid var(--dsw-alias-border-l2);
 }
 
-/* The details subtree stays mounted at zero width, so its border must not paint
-   a 1px seam. The collapsed sidebar instead retains a bordered compact rail. */
+/* The details subtree stays mounted as an activity rail when collapsed. */
 .frame[data-details-collapsed] .detailsCol {
-  border-left: none;
+  border-left-color: var(--dsw-alias-border-l1);
 }
 
 /* Drag handles are frame children (columns clip overflow): an 8px hit strip

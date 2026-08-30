@@ -55,8 +55,18 @@ export function DetailsPanel({ useChat, useStore, renderSlot, cwd, t }: DetailsP
     (a, b) => shallowEqual(a, b))
   if (selection === null || callId === undefined) return <div className={css.empty}>{t('details.empty')}</div>
   if (material === null) return <div className={css.empty}>{t('details.notInWindow')}</div>
+  const running = !('kind' in material.block)
+  const failed = !running && 'isError' in material.block && material.block.isError
+  const status = running ? t('details.running') : failed ? t('command.failed') : t('command.done')
   return (
-    <>
+    <div className={css.panel}>
+      <header className={css.header}>
+        <div>
+          <div className={css.eyebrow}>{t('details.title')}</div>
+          <div className={css.toolName}>{material.name}</div>
+        </div>
+        <span className={failed ? css.badgeError : running ? css.badgeRunning : css.badgeDone}>{status}</span>
+      </header>
       {material.argsRaw !== null && (
         <section className={css.section}>
           <div className={css.sectionLabel}>{t('details.input')}</div>
@@ -73,6 +83,6 @@ export function DetailsPanel({ useChat, useStore, renderSlot, cwd, t }: DetailsP
           })}
         </Fragment>
       </section>
-    </>
+    </div>
   )
 }

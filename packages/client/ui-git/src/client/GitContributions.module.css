@@ -1,7 +1,10 @@
 .tab {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
+  min-width: 36px;
+  min-height: 36px;
   padding: 5px 8px;
   border: none;
   border-radius: 6px;

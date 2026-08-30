@@ -10,12 +10,12 @@
  * through the three framework shares — zero cordis or framework imports,
  * zero self-made hooks.
  */
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type {
   PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore,
 } from '@deepseek-ai/dsh-client-ui-slots'
-import { computeColumns, SIDEBAR_AUTO_COLLAPSE, SIDEBAR_DEFAULT } from './columns.ts'
+import { computeColumns, DETAILS_MIN, SIDEBAR_AUTO_COLLAPSE, SIDEBAR_DEFAULT } from './columns.ts'
 import { DocumentTitle } from './DocumentTitle.tsx'
 import type { createLayoutStore } from './stores.ts'
 import css from './AppFrame.module.css'
@@ -93,29 +93,15 @@ export function AppFrame({
   useSessions,
   actions,
   renderSlot,
-  SessionProvider,
   t,
 }: AppFrameProps) {
   const panels = useStore(s => s)
-  const detailsSession = useSessions((s) => {
-    const current = s.current
-    return current !== undefined && s.byId[current] !== undefined ? current : undefined
-  })
   const documentTitle = useSessions((s) => {
     const current = s.current
     return current === undefined ? undefined : s.byId[current]?.title
   })
   const frameRef = useRef<HTMLDivElement | null>(null)
   const [viewport, setViewport] = useState(() => window.innerWidth)
-
-  const lastSession = useRef(detailsSession)
-  useLayoutEffect(() => {
-    if (detailsSession === undefined) return
-    if (lastSession.current !== undefined && lastSession.current !== detailsSession) {
-      actions.closeDetails()
-    }
-    lastSession.current = detailsSession
-  }, [actions, detailsSession])
 
   // Track the frame's own box (not the window): rAF-throttled ResizeObserver.
   useEffect(() => {
@@ -149,7 +135,9 @@ export function AppFrame({
   const sidebarPreference = sidebarCollapsed
     ? 0
     : panels.sidebar === 0 ? SIDEBAR_DEFAULT : panels.sidebar
-  const cols = computeColumns(viewport, sidebarPreference, detailsSession === undefined ? 0 : panels.details)
+  const detailsCollapsed = panels.detailsCollapsed
+  const cols = computeColumns(viewport, sidebarPreference, detailsCollapsed ? 0 : panels.details)
+  const detailsRenderedCollapsed = detailsCollapsed || cols.details < DETAILS_MIN
   const colsRef = useRef(cols)
   colsRef.current = cols
 
@@ -178,7 +166,7 @@ export function AppFrame({
       className={css.frame}
       style={{ gridTemplateColumns: `${cols.sidebar}px minmax(0, 1fr) ${cols.details}px` }}
       data-sidebar-collapsed={sidebarCollapsed || undefined}
-      data-details-collapsed={cols.details === 0 || undefined}
+      data-details-collapsed={detailsRenderedCollapsed || undefined}
       data-dragging={dragging || undefined}
     >
       <DocumentTitle
@@ -198,21 +186,17 @@ export function AppFrame({
       </div>
       <>
         {/* Both column occupants stay at fixed tree positions from first
-            paint — no loading gate: a bare status line reads worse than
-            the shell's own pending rendering. The conversation
-            is session-maybe; SessionProvider withholds the strict details
-            entry while no session is current. */}
+            paint. The conversation is session-maybe, while the persistent
+            right activity rail remains available without a current session. */}
         <CenterColumn>{renderSlot('conversation', {})}</CenterColumn>
-        <DetailsColumn>
-          <SessionProvider>{renderSlot('details', {})}</SessionProvider>
-        </DetailsColumn>
+        <DetailsColumn>{renderSlot('details', { collapsed: detailsRenderedCollapsed, width: cols.details })}</DetailsColumn>
       </>
       <div className={css.overlayLayer} data-shell-overlay>
         {renderSlot('shell.overlay', {})}
       </div>
       {/* The collapsed rail is fixed-width: no resize handle while closed. */}
       {!sidebarCollapsed && <DragHandle side="sidebar" left={cols.sidebar} onStart={onSidebarStart} onDrag={onSidebarDrag} onEnd={onDragEnd} />}
-      {cols.details > 0 && <DragHandle side="details" left={viewport - cols.details} onStart={onDetailsStart} onDrag={onDetailsDrag} onEnd={onDragEnd} />}
+      {!detailsRenderedCollapsed && <DragHandle side="details" left={viewport - cols.details} onStart={onDetailsStart} onDrag={onDetailsDrag} onEnd={onDragEnd} />}
     </div>
   )
 }

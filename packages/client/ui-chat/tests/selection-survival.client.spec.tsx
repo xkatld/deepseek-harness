@@ -15,17 +15,17 @@ async function createBench() {
   const chat = createChatStore()
   await runtime.root.declare({
     'conversation.view': { kind: 'list', scope: 'session' },
-    'details': { kind: 'single', scope: 'session' },
-  }, (_props: PropsRenderSlots<'conversation.view' | 'details'>) => null)
+    'right-sidebar.content': { kind: 'list', scope: 'session' },
+  }, (_props: PropsRenderSlots<'conversation.view' | 'right-sidebar.content'>) => null)
   runtime.slots.register({ name: 'conversation.view', id: 'chat', store: chat }, () => null)
-  runtime.slots.register({ name: 'details', store: chat }, () => null)
+  runtime.slots.register({ name: 'right-sidebar.content', id: 'tool', store: chat }, () => null)
   runtime.renderRoot()
   return { runtime }
 }
 
 function storeFor(
   current: Awaited<ReturnType<typeof createBench>>,
-  slot: 'conversation.view' | 'details',
+  slot: 'conversation.view' | 'right-sidebar.content',
   sessionId: SessionId,
 ): ChatInstance {
   return current.runtime.storeOf(slot, sessionId) as ChatInstance
@@ -36,7 +36,7 @@ describe('Chat selection survives on its store seat', () => {
     const b = await createBench()
     await b.runtime.sessions.add({ id: 's1' })
     const chat = storeFor(b, 'conversation.view', sid('s1'))
-    const details = storeFor(b, 'details', sid('s1'))
+    const details = storeFor(b, 'right-sidebar.content', sid('s1'))
     chat.actions.select({ turnSeq: 3, callId: 'c1' })
 
     expect(details).toBe(chat)

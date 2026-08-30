@@ -1,13 +1,13 @@
 /**
  * Pure concession-chain column solver for the three-column AppFrame.
  * Chain order is fixed by contract: keep center >= CENTER_MIN by shrinking
- * details, then auto-closing it (derived zero width — preferred width
- * preferences are never rewritten, so widening the window restores them).
+ * details, then collapsing it to the persistent activity rail (the preferred
+ * width is never rewritten, so widening the window restores it).
  * The sidebar never concedes: its rendered width is always the drag
  * preference (or the collapsed rail), and center absorbs any remaining
  * deficit as the last resort. Inputs are the layout store's plain width
- * preferences (0 = closed); a closed sidebar resolves to the fixed
- * SIDEBAR_COLLAPSED control rail while closed details resolve to zero width.
+ * preferences (0 = collapsed); collapsed sidebars resolve to their fixed
+ * activity rails.
  * The SIDEBAR_AUTO_COLLAPSE breakpoint is consumed by AppFrame, which decides
  * the effective sidebar preference before solving; the solver itself stays
  * breakpoint-free.
@@ -31,12 +31,14 @@ export const SIDEBAR_COLLAPSED = 56
  * LG breakpoint); a manual toggle below it re-expands over the squeezed center
  * (stores.ts narrowExpanded). */
 export const SIDEBAR_AUTO_COLLAPSE = 1024
-/** Details drag clamp floor. */
+/** Details drag clamp floor, including its persistent activity rail. */
 export const DETAILS_MIN = 300
 /** Details drag clamp ceiling. */
 export const DETAILS_MAX = 520
 /** Details width before any user drag. */
 export const DETAILS_DEFAULT = 360
+/** Collapsed details activity rail. */
+export const DETAILS_COLLAPSED = 48
 
 /**
  * Clamp a panel width into its contract range.
@@ -56,22 +58,26 @@ export function clampWidth(px: number, min: number, max: number): number {
  * store boundary and callers may still supply stale ranges.
  * @param viewport - available frame width in px.
  * @param sidebar - sidebar width preference in px (0 = closed).
- * @param details - details width preference in px (0 = closed).
- * @returns resolved widths; details 0 means visually closed (never unmounted), while a closed sidebar keeps its compact rail.
+ * @param details - details width preference in px (0 = collapsed rail).
+ * @returns resolved widths; collapsed sidebars keep their activity rails while mounted.
  */
 export function computeColumns(viewport: number, sidebar: number, details: number): Columns {
   // The sidebar is fixed at its preference (or the rail) — it never concedes.
   const s = sidebar === 0 ? SIDEBAR_COLLAPSED : clampWidth(sidebar, SIDEBAR_MIN, SIDEBAR_MAX)
-  const d0 = details === 0 ? 0 : clampWidth(details, DETAILS_MIN, DETAILS_MAX)
+  const d0 = details === 0 ? DETAILS_COLLAPSED : clampWidth(details, DETAILS_MIN, DETAILS_MAX)
+
+  // A manually collapsed details column keeps its activity rail and does not
+  // expand as part of the concession solve.
+  if (details === 0) return { sidebar: s, center: Math.max(0, viewport - s - d0), details: d0 }
 
   // Step 1: everything fits at preferred widths.
   if (s + d0 + CENTER_MIN <= viewport) return { sidebar: s, center: viewport - s - d0, details: d0 }
 
   // Step 2: shrink details toward its minimum.
-  const d1 = d0 === 0 ? 0 : Math.max(DETAILS_MIN, viewport - s - CENTER_MIN)
+  const d1 = Math.max(DETAILS_MIN, viewport - s - CENTER_MIN)
   if (s + d1 + CENTER_MIN <= viewport) return { sidebar: s, center: CENTER_MIN, details: d1 }
 
-  // Step 3: auto-close details (derived — preferences untouched); center
-  // absorbs any remaining deficit (may drop below CENTER_MIN).
-  return { sidebar: s, center: Math.max(0, viewport - s), details: 0 }
+  // Step 3: collapse details to its activity rail (derived — preferences
+  // untouched); center absorbs any remaining deficit.
+  return { sidebar: s, center: Math.max(0, viewport - s - DETAILS_COLLAPSED), details: DETAILS_COLLAPSED }
 }

@@ -64,15 +64,15 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      */
     'conversation': { kind: 'single'; scope: 'session-maybe'; owner: ConvOwnerProps }
     /**
-     * The right details column, shown when the layout opens it. OCCUPIED by
-     * ui-right-sidebar's shell, which declares additive tab and content seats
-     * for independent features. Replacing it replaces the whole column and
-     * removes those seats.
+     * The persistent right activity column. OCCUPIED by ui-right-sidebar's
+     * shell, which renders a compact plugin rail while collapsed and declares
+     * additive tab and content seats for independent features. Replacing it
+     * replaces the whole column and removes those seats.
      *
-     * No owner props: the framework injects the session id and hooks for the
-     * `session` scope, and `ctx.layout` owns whether the column is open.
+     * The root scope keeps the rail available without a current session;
+     * feature content reads the optional current session through standard hooks.
      */
-    'details': { kind: 'single'; scope: 'session'; owner: DetailsOwnerProps }
+    'details': { kind: 'single'; scope: 'root'; owner: DetailsOwnerProps }
     /**
      * Frame-wide floating layer, above every column and outside their scroll
      * containers. Deliberately generic and unowned by any feature: a badge, a
@@ -104,8 +104,13 @@ export interface SidebarOwnerProps {
 /** Conversation owner share: business state and actions belong to the registrant. */
 export interface ConvOwnerProps {}
 
-/** Details owner share: empty — sessionId arrives as a framework-standard prop. */
-export interface DetailsOwnerProps {}
+/** Details owner share: live state for the persistent right activity rail. */
+export interface DetailsOwnerProps {
+  /** True when only the right activity rail is visible. */
+  collapsed: boolean
+  /** Rendered column width in px. */
+  width: number
+}
 
 /** Required services (cordis fiber inject — the loader passes all module exports as an object plugin). */
 export const inject = ['slots', 'theme', 'locale']
@@ -126,7 +131,7 @@ export function apply(ctx: ClientContext): void {
       children: {
         'sidebar': { kind: 'single', scope: 'root' },
         'conversation': { kind: 'single', scope: 'session-maybe' },
-        'details': { kind: 'single', scope: 'session' },
+        'details': { kind: 'single', scope: 'root' },
         'shell.overlay': { kind: 'list', scope: 'root' },
       },
       // Exclusive store: the factory itself — the framework instantiates per

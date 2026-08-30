@@ -17,9 +17,15 @@ const PERSIST_KEY = 'dsh.layout.panels'
 beforeEach(() => { localStorage.clear() })
 
 describe('createLayoutStore', () => {
-  it('initializes the sidebar at its default width, details closed, wide viewport assumed', () => {
+  it('initializes both panel width preferences and keeps details collapsed', () => {
     const { store } = createLayoutStore().create()
-    expect(store.getSnapshot()).toEqual({ sidebar: SIDEBAR_DEFAULT, details: 0, narrow: false, narrowExpanded: false })
+    expect(store.getSnapshot()).toEqual({
+      sidebar: SIDEBAR_DEFAULT,
+      details: DETAILS_DEFAULT,
+      detailsCollapsed: true,
+      narrow: false,
+      narrowExpanded: false,
+    })
   })
 
   it('each create() is an independent instance (factory is not a singleton)', () => {
@@ -55,7 +61,13 @@ describe('createLayoutStore', () => {
     actions.setSidebar(400)
     actions.setNarrow(true)
     actions.toggleSidebar()
-    expect(store.getSnapshot()).toEqual({ sidebar: 400, details: 0, narrow: true, narrowExpanded: true })
+    expect(store.getSnapshot()).toEqual({
+      sidebar: 400,
+      details: DETAILS_DEFAULT,
+      detailsCollapsed: true,
+      narrow: true,
+      narrowExpanded: true,
+    })
     actions.toggleSidebar()
     expect(store.getSnapshot().narrowExpanded).toBe(false)
     expect(store.getSnapshot().sidebar).toBe(400)
@@ -74,15 +86,15 @@ describe('createLayoutStore', () => {
     expect(store.getSnapshot().narrowExpanded).toBe(false)
   })
 
-  it('openDetails uses the contract default, preserves an open width, and closeDetails zeroes', () => {
+  it('open and close details preserve its dragged width preference', () => {
     const { store, actions } = createLayoutStore().create()
     actions.openDetails()
-    expect(store.getSnapshot().details).toBe(DETAILS_DEFAULT)
+    expect(store.getSnapshot()).toMatchObject({ details: DETAILS_DEFAULT, detailsCollapsed: false })
     actions.setDetails(500)
-    actions.openDetails()
-    expect(store.getSnapshot().details).toBe(500)
     actions.closeDetails()
-    expect(store.getSnapshot().details).toBe(0)
+    expect(store.getSnapshot()).toMatchObject({ details: 500, detailsCollapsed: true })
+    actions.openDetails()
+    expect(store.getSnapshot()).toMatchObject({ details: 500, detailsCollapsed: false })
   })
 
   it('does not persist panel geometry', () => {
@@ -95,7 +107,8 @@ describe('createLayoutStore', () => {
     const second = createLayoutStore().create()
     expect(second.store.getSnapshot()).toEqual({
       sidebar: SIDEBAR_DEFAULT,
-      details: 0,
+      details: DETAILS_DEFAULT,
+      detailsCollapsed: true,
       narrow: false,
       narrowExpanded: false,
     })

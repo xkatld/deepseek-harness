@@ -10,8 +10,14 @@
   cursor: pointer;
 }
 .tab[aria-selected='true'] { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
-.empty { padding: 8px 0; font-size: 13px; line-height: 20px; color: var(--dsw-alias-label-tertiary); }
-.section { margin-bottom: 16px; }
+.panel { display: flex; flex-direction: column; gap: 16px; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--dsw-alias-border-normal); }
+.eyebrow { color: var(--dsw-alias-label-tertiary); font-size: 11px; line-height: 16px; }
+.toolName { color: var(--dsw-alias-label-primary); font-size: 15px; font-weight: 600; line-height: 22px; word-break: break-word; }
+.badgeDone, .badgeRunning, .badgeError { flex: none; padding: 2px 8px; border-radius: 999px; font-size: 11px; line-height: 16px; }
+.badgeDone { background: var(--dsw-alias-state-success-bg); color: var(--dsw-alias-state-success-primary); }
+.badgeRunning { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-secondary); }
+.badgeError { background: var(--dsw-alias-state-error-bg); color: var(--dsw-alias-state-error-primary); }
 .sectionLabel { margin-bottom: 6px; font-size: 12px; line-height: 18px; font-weight: 500; color: var(--dsw-alias-label-secondary); }
 .code {
   margin: 0;

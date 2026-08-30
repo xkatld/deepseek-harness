@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type {} from '../src/client/index.ts'
 import type { SessionProviderComponent } from '@deepseek-ai/dsh-client-ui-slots'
 import type { RightSidebarContentOwnerProps, RightSidebarTabOwnerProps } from '../src/client/RightSidebar.tsx'
-import { RightSidebarOpener, RightSidebarShell } from '../src/client/RightSidebar.tsx'
+import { RightSidebarShell } from '../src/client/RightSidebar.tsx'
 import { createRightSidebarStore } from '../src/client/stores.ts'
 import { en } from '../src/client/locales.ts'
 
@@ -26,20 +26,15 @@ describe('RightSidebar UI', () => {
     render(
       <RightSidebarShell
         SessionProvider={SessionProviderStub}
-        sessionId={'s1' as never}
-        useSession={neverHook}
-        useSessions={((selector: (state: { byId: Record<string, { cwd: string }> }) => unknown) => selector({ byId: { s1: { cwd: '/repo' } } })) as never}
+        useSessions={((selector: (state: { current: string; byId: Record<string, { cwd: string }> }) => unknown) => selector({ current: 's1', byId: { s1: { cwd: '/repo' } } })) as never}
         useWorkspaces={neverHook}
-        useTrajectory={neverHook}
-        useChat={neverHook}
-        useConversation={neverHook}
         useSessionPendingInteraction={neverHook}
-        useProjection={neverHook}
-        useInput={neverHook}
-        inputActions={{} as never}
         useStore={((selector: (state: ReturnType<typeof instance.store.getSnapshot>) => unknown) =>
           selector(instance.store.getSnapshot())) as never}
         actions={instance.actions}
+        collapsed={false}
+        width={360}
+        activate={instance.actions.activate}
         close={close}
         t={t}
         renderSlot={((key: string, owner: RightSidebarTabOwnerProps | RightSidebarContentOwnerProps, options?: { only?: string }) => {
@@ -53,36 +48,44 @@ describe('RightSidebar UI', () => {
 
     expect(screen.getByRole('complementary', { name: 'Right sidebar' })).toBeTruthy()
     expect(tabOwner?.activeId).toBe('panel-a')
+    expect(tabOwner?.collapsed).toBe(false)
     expect(contentOwner).toEqual({ cwd: '/repo', closeDetails: close })
     expect(contentOnly).toBe('panel-a')
     fireEvent.click(screen.getByRole('button', { name: 'Close right sidebar' }))
     expect(close).toHaveBeenCalledOnce()
   })
 
-  it('uses a generic panel glyph for the shell opener', () => {
-    const show = vi.fn()
-    const view = render(
-      <RightSidebarOpener
-        session={{} as never}
-        input={{} as never}
-        sessionId={'s1' as never}
-        useSession={neverHook}
-        useSessions={neverHook}
+  it('keeps plugin tabs visible in the collapsed rail and hides panel content', () => {
+    const instance = createRightSidebarStore().create()
+    const activate = vi.fn()
+    const rendered: string[] = []
+    render(
+      <RightSidebarShell
+        collapsed
+        width={48}
+        SessionProvider={SessionProviderStub}
+        useSessions={((selector: (state: { current?: string; byId: Record<string, never> }) => unknown) => selector({ byId: {} })) as never}
         useWorkspaces={neverHook}
-        useTrajectory={neverHook}
-        useChat={neverHook}
-        useConversation={neverHook}
         useSessionPendingInteraction={neverHook}
-        useProjection={neverHook}
-        useInput={neverHook}
-        inputActions={{} as never}
-        show={show}
+        useStore={((selector: (state: ReturnType<typeof instance.store.getSnapshot>) => unknown) =>
+          selector(instance.store.getSnapshot())) as never}
+        actions={instance.actions}
+        activate={activate}
+        close={vi.fn()}
         t={t}
+        renderSlot={((key: string, owner: RightSidebarTabOwnerProps) => {
+          rendered.push(key)
+          if (key === 'right-sidebar.tabs') {
+            expect(owner.collapsed).toBe(true)
+            owner.activate('git')
+          }
+          return <span>{key}</span>
+        }) as never}
       />,
     )
-    const button = screen.getByRole('button', { name: 'Open right sidebar' })
-    expect(view.container.querySelector('rect')).not.toBeNull()
-    fireEvent.click(button)
-    expect(show).toHaveBeenCalledOnce()
+
+    expect(rendered).toEqual(['right-sidebar.tabs'])
+    expect(activate).toHaveBeenCalledWith('git')
+    expect(screen.queryByRole('button', { name: 'Close right sidebar' })).toBeNull()
   })
 })

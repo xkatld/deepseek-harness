@@ -4,7 +4,7 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-right-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import { GitOpener, GitTab } from './GitContributions.tsx'
+import { GitTab } from './GitContributions.tsx'
 import type { GitPanelInjected } from './GitPanel.tsx'
 import { GitPanel } from './GitPanel.tsx'
 import { en, zh, type GitKey } from './locales.ts'
@@ -35,8 +35,4 @@ export function apply(ctx: Context): void {
   ctx.slots.inject('right-sidebar.content', () => ctx.slots.register({
     name: 'right-sidebar.content', id: 'git', order: 20, locale: NS, inject: injected,
   }, GitPanel))
-  ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
-    name: 'conversation.input.right', id: 'git', order: 30, locale: NS,
-    inject: () => ({ openGit: () => { ctx.rightSidebar.open('git') } }),
-  }, GitOpener))
 }

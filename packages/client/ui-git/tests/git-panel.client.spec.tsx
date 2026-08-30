@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
+import type { ReactElement } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type {} from '../src/client/index.ts'
+import { GitTab } from '../src/client/GitContributions.tsx'
 import { GitPanel, type GitPanelProps } from '../src/client/GitPanel.tsx'
 import { en } from '../src/client/locales.ts'
 
@@ -16,6 +18,31 @@ const t: GitPanelProps['t'] = (key, params) => {
 }
 
 describe('GitPanel', () => {
+  it('uses the right-sidebar tab as its only opener and expands through activate', () => {
+    const activate = vi.fn()
+    const props = {
+      activeId: null,
+      collapsed: true,
+      activate,
+      t,
+      useSessions: vi.fn(),
+      useWorkspaces: vi.fn(),
+    } as never
+    const first = (props as never) as Parameters<typeof GitTab>[0]
+    const { rerender } = render(GitTab(first) as ReactElement)
+    const railTab = screen.getByRole('tab', { name: en.title })
+    expect(railTab.textContent).toBe('')
+    fireEvent.click(railTab)
+    expect(activate).toHaveBeenCalledWith('git')
+
+    const second = ({
+      activeId: 'git', collapsed: false, activate, t,
+      useSessions: vi.fn(), useWorkspaces: vi.fn(),
+    } as never) as Parameters<typeof GitTab>[0]
+    rerender(GitTab(second) as ReactElement)
+    expect(screen.getByRole('tab', { name: en.title }).getAttribute('aria-selected')).toBe('true')
+  })
+
   it('renders repository status, history, files, and diff', async () => {
     const status = vi.fn().mockResolvedValue({
       branch: 'master', head: '1234567890abcdef', upstream: 'origin/master', ahead: 1, behind: 2,
