@@ -35,21 +35,21 @@
 .status[data-status='error']::before { background: #ff6b6b; }
 .status[data-status='exited']::before { background: #e0af68; }
 
-.action {
-  display: inline-flex;
-  align-items: center;
+.actions { display: inline-flex; align-items: center; gap: 5px; }
+.iconAction {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
   height: 27px;
-  padding: 0 8px;
-  gap: 5px;
+  padding: 0;
   color: #a9bdcc;
   border: 1px solid #29465a;
   border-radius: 4px;
   background: #112838;
   cursor: pointer;
-  font: 11px/1 inherit;
 }
-.action:hover:not(:disabled) { color: #eef7fc; border-color: #3a6681; background: #173449; }
-.action:disabled { cursor: wait; opacity: .55; }
+.iconAction:hover:not(:disabled) { color: #eef7fc; border-color: #3a6681; background: #173449; }
+.iconAction:disabled { cursor: not-allowed; opacity: .35; }
 
 .terminal { flex: 1; min-height: 0; min-width: 0; padding: 10px 8px 8px 10px; overflow: hidden; background: #071019; }
 .terminal :global(.xterm) { height: 100%; }

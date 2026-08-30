@@ -5,7 +5,7 @@ import '@xterm/xterm/css/xterm.css'
 import type {
   ShellCloseValue, ShellOpenValue, ShellOutputFrame, ShellResizeValue, ShellWriteValue,
 } from '@deepseek-ai/dsh-api-shell/types'
-import { IconRefreshOutline16, IconTerminalOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconPlayOutline16, IconRefreshOutline16, IconTerminalOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { RightSidebarContentOwnerProps } from '@deepseek-ai/dsh-client-ui-right-sidebar/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
@@ -78,7 +78,10 @@ export function ShellPanel({ cwd, sessionId, shell, t }: ShellPanelProps) {
       const terminalId = terminalIdRef.current
       if (terminalId === undefined) return
       void shell.write({ sessionId, terminalId, data: input }).then(value).catch((failure: unknown) => {
-        setError(failure instanceof Error ? failure.message : String(failure))
+        const message = failure instanceof Error ? failure.message : String(failure)
+        setError(message.includes('no sandbox backend') || message.includes('workspace-write')
+          ? t('sandboxUnavailable')
+          : message)
         setStatus('error')
       })
     })
@@ -153,13 +156,19 @@ export function ShellPanel({ cwd, sessionId, shell, t }: ShellPanelProps) {
         if (!controller.signal.aborted && generation === generationRef.current) setStatus('exited')
       } catch (failure: unknown) {
         if (!controller.signal.aborted && generation === generationRef.current) {
-          setError(failure instanceof Error ? failure.message : String(failure))
+          const message = failure instanceof Error ? failure.message : String(failure)
+          setError(message.includes('no sandbox backend') || message.includes('workspace-write')
+            ? t('sandboxUnavailable')
+            : message)
           setStatus('error')
         }
       }
     } catch (failure: unknown) {
       if (generation === generationRef.current) {
-        setError(failure instanceof Error ? failure.message : String(failure))
+        const message = failure instanceof Error ? failure.message : String(failure)
+        setError(message.includes('no sandbox backend') || message.includes('workspace-write')
+          ? t('sandboxUnavailable')
+          : message)
         setStatus('error')
       }
     }
@@ -174,16 +183,20 @@ export function ShellPanel({ cwd, sessionId, shell, t }: ShellPanelProps) {
         <span className={css.status} data-status={status}>{t(status)}</span>
       </div>
       <code title={cwd}>{cwd}</code>
-      <button type="button" className={css.action} onClick={() => { void openTerminal() }} disabled={status === 'opening'} title={terminalIdRef.current === undefined ? t('open') : t('restart')}>
-        <IconRefreshOutline16 size={15} />
-        <span>{terminalIdRef.current === undefined ? t('open') : t('restart')}</span>
-      </button>
+      <div className={css.actions}>
+        <button type="button" className={css.iconAction} onClick={() => { void openTerminal() }} disabled={status === 'opening' || terminalIdRef.current !== undefined} aria-label={t('startTerminal')} title={t('startTerminal')}>
+          <IconPlayOutline16 size={15} />
+        </button>
+        <button type="button" className={css.iconAction} onClick={() => { void openTerminal() }} disabled={status === 'opening' || terminalIdRef.current === undefined} aria-label={t('refreshTerminal')} title={t('refreshTerminal')}>
+          <IconRefreshOutline16 size={15} />
+        </button>
+      </div>
     </div>
     {error === undefined ? null : <div className={css.error} role="alert">{error}</div>}
     <div className={css.terminal} ref={surfaceRef} data-terminal />
     {status === 'idle' ? <button type="button" className={css.launch} onClick={() => { void openTerminal() }}>
       <IconTerminalOutline16 size={26} />
-      <span>{t('open')}</span>
+      <span>{t('startTerminal')}</span>
       <kbd>Enter</kbd>
     </button> : null}
   </div>

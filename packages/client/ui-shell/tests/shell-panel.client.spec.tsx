@@ -54,7 +54,7 @@ describe('ShellPanel', () => {
       close: vi.fn().mockResolvedValue({ ok: true, value: { closed: true } }),
     }
     render(<ShellPanel {...base} cwd="/repo" sessionId={'session-1' as never} shell={shell as never} t={t} />)
-    fireEvent.click(screen.getByRole('button', { name: en.open }))
+    fireEvent.click(screen.getByRole('button', { name: en.startTerminal }))
     await waitFor(() => { expect(shell.open).toHaveBeenCalledWith({ sessionId: 'session-1', cwd: '/repo', cols: 80, rows: 24 }) })
     await waitFor(() => { expect(terminal.write).toHaveBeenCalledWith('\x1b[32mready\x1b[0m') })
     expect(shell.follow).toHaveBeenCalledWith({ sessionId: 'session-1', terminalId: 'pty-1', cursor: 0 }, expect.any(AbortSignal))
