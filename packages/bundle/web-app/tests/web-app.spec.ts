@@ -143,11 +143,11 @@ describe('web-app runtime glue', () => {
       lanAddresses: ['192.168.1.5'],
       trustedHosts: ['192.168.1.5', 'lab.internal'],
     })
-    expect(log).toHaveBeenCalledWith('dsh web: http://127.0.0.1:4567/?token=test-token (LAN: http://192.168.1.5:4567/?token=test-token)')
+    expect(log).toHaveBeenCalledWith('dsh web: http://127.0.0.1:4567/?token=test-token http://192.168.1.5:4567/?token=test-token http://lab.internal/?token=test-token')
     expect(log).toHaveBeenCalledWith('dsh web: opening the default browser; pass --no-open to disable')
     expect(openBrowser).toHaveBeenCalledWith('http://127.0.0.1:4567/?token=test-token')
     expect(lifecycle).toEqual([
-      'dsh web: http://127.0.0.1:4567/?token=test-token (LAN: http://192.168.1.5:4567/?token=test-token)',
+      'dsh web: http://127.0.0.1:4567/?token=test-token http://192.168.1.5:4567/?token=test-token http://lab.internal/?token=test-token',
       'dsh web: opening the default browser; pass --no-open to disable',
       'open:http://127.0.0.1:4567/?token=test-token',
     ])

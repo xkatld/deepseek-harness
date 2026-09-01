@@ -85,6 +85,9 @@ export function apply(ctx: Context): void {
     if ((authUser === '') !== (authPassword === '')) {
       program.error('error: --auth-user and --auth-password must be set together')
     }
+    if (options.host === '0.0.0.0' && (options.trustedHost?.length ?? 0) === 0) {
+      program.error('error: --host 0.0.0.0 requires at least one --trusted-host authority')
+    }
     if (options.host === '0.0.0.0' && (authUser === '' || authPassword === '')) {
       program.error('error: --host 0.0.0.0 requires --auth-user and --auth-password')
     }

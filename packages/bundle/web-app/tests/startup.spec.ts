@@ -100,14 +100,21 @@ describe('web command-line provider', () => {
       openBrowser: false,
       port: 8080,
       trustedHosts: ['lab.internal', 'lab-2.internal', '10.0.0.9'],
+      authUser: '',
+      authPassword: '',
     })
-    expect(observed.readerConfig).toEqual(values)
+    expect(observed.readerConfig).toEqual({
+      host: '127.0.0.1',
+      openBrowser: false,
+      port: 8080,
+      trustedHosts: ['lab.internal', 'lab-2.internal', '10.0.0.9'],
+    })
     expect(observed.exits).toEqual([])
   })
 
   it('leaves deployment values to each consumer when flags omit them', async () => {
     const { values, observed } = await bootProvider([])
-    expect(values).toEqual({ openBrowser: true, trustedHosts: [] })
+    expect(values).toEqual({ openBrowser: true, trustedHosts: [], authUser: '', authPassword: '' })
     expect(observed.readerConfig).toEqual({
       host: '127.0.0.1',
       openBrowser: true,
@@ -134,11 +141,42 @@ describe('web command-line provider', () => {
     expect(observed.exits).toEqual([1])
   })
 
-  it('rejects the intentionally unsupported all-interfaces host before the consumer activates', async () => {
+  it('requires a declared public authority for an all-interfaces bind', async () => {
     const { values, observed } = await bootProvider(['--host', '0.0.0.0'])
-    expect(observed.out).toContain('--host 0.0.0.0 is intentionally not supported yet for safety: it would expose remote code execution to the network; use 127.0.0.1 instead')
+    expect(observed.out).toContain('--host 0.0.0.0 requires at least one --trusted-host authority')
     expect(values).toBeUndefined()
     expect(observed.readerConfig).toBeUndefined()
     expect(observed.exits).toEqual([1])
+  })
+
+  it('requires Web login credentials for an all-interfaces bind', async () => {
+    const { values, observed } = await bootProvider([
+      '--host', '0.0.0.0', '--trusted-host', 'harness.example:58888',
+    ])
+    expect(observed.out).toContain('--host 0.0.0.0 requires --auth-user and --auth-password')
+    expect(values).toBeUndefined()
+    expect(observed.readerConfig).toBeUndefined()
+    expect(observed.exits).toEqual([1])
+  })
+
+  it('permits an all-interfaces bind with a declared authority and Web login credentials', async () => {
+    const { values, observed } = await bootProvider([
+      '--host', '0.0.0.0', '--trusted-host', 'harness.example:58888',
+      '--auth-user', 'operator', '--auth-password', 'test-password',
+    ])
+    expect(values).toEqual({
+      host: '0.0.0.0',
+      openBrowser: true,
+      trustedHosts: ['harness.example:58888'],
+      authUser: 'operator',
+      authPassword: 'test-password',
+    })
+    expect(observed.readerConfig).toEqual({
+      host: '0.0.0.0',
+      openBrowser: true,
+      port: 3080,
+      trustedHosts: ['harness.example:58888'],
+    })
+    expect(observed.exits).toEqual([])
   })
 })

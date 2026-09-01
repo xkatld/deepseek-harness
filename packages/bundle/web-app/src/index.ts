@@ -270,15 +270,23 @@ export function apply(ctx: Context, config: Config): void {
         if (ANNOUNCED_ROOTS.has(connectionCtx.root)) return
         const webUrl = localWebUrl(connectionCtx)
         const authenticatedUrl = connectionCtx.connection.authenticatedUrl(webUrl)
-        // Reuse the exact LAN snapshot provided to the /api trust fence.
+        // Reuse the exact trust snapshot provided to the /api fence. Explicit
+        // authorities are caller-owned deployment names, so publish a token URL
+        // for each one alongside the local URL.
         const lanCandidate = runtime.lanAddresses[0]
         const port = connectionCtx.webServer.port
         const lanUrl = lanCandidate === undefined
           ? undefined
           : connectionCtx.connection.authenticatedUrl(`http://${lanCandidate}:${String(port)}`)
+        const remoteUrls = config.trustedHosts.map(authority =>
+          connectionCtx.connection.authenticatedUrl(`http://${authority}`),
+        )
         ANNOUNCED_ROOTS.add(connectionCtx.root)
         if (config.printUrl) {
-          console.log(`dsh web: ${authenticatedUrl}${lanUrl === undefined ? '' : ` (LAN: ${lanUrl})`}`)
+          const publishedUrls = [authenticatedUrl, lanUrl, ...remoteUrls].filter((url, index, urls) =>
+            url !== undefined && urls.indexOf(url) === index,
+          )
+          console.log(`dsh web: ${publishedUrls.join(' ')}`)
         }
         if (handoffBrowser) {
           console.log('dsh web: opening the default browser; pass --no-open to disable')
